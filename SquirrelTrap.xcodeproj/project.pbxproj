@@ -1,0 +1,372 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5FA1B2C3D4E5F607080900A1 /* SquirrelTrapApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809000B /* SquirrelTrapApp.swift */; };
+		5FA1B2C3D4E5F607080900A2 /* AppSwitchMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809000F /* AppSwitchMonitor.swift */; };
+		5FA1B2C3D4E5F607080900A3 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090010 /* PermissionManager.swift */; };
+		5FA1B2C3D4E5F607080900A4 /* PanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090011 /* PanelController.swift */; };
+		5FA1B2C3D4E5F607080900A5 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090012 /* LaunchAtLoginManager.swift */; };
+		5FA1B2C3D4E5F607080900A6 /* IntentEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090013 /* IntentEntry.swift */; };
+		5FA1B2C3D4E5F607080900A7 /* IntentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090014 /* IntentStore.swift */; };
+		5FA1B2C3D4E5F607080900A8 /* PromptPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090015 /* PromptPanelView.swift */; };
+		5FA1B2C3D4E5F607080900A9 /* IntentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090016 /* IntentRowView.swift */; };
+		5FA1B2C3D4E5F607080900AA /* PermissionRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */; };
+		5FA1B2C3D4E5F607080900AC /* PromptPanelViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090019 /* PromptPanelViewModel.swift */; };
+		5FA1B2C3D4E5F607080900AD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809000E /* Assets.xcassets */; };
+		5FA1B2C3D4E5F607080900AE /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001A /* AppPreferences.swift */; };
+		5FA1B2C3D4E5F607080900AF /* PreferencesHotkeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */; };
+		5FA1B2C3D4E5F607080900B0 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */; };
+		5FA1B2C3D4E5F607080900B2 /* KofiButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001E /* KofiButton.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5FA1B2C3D4E5F60708090003 /* SquirrelTrap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SquirrelTrap.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5FA1B2C3D4E5F6070809000B /* SquirrelTrapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquirrelTrapApp.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809000D /* SquirrelTrap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SquirrelTrap.entitlements; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809000F /* AppSwitchMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSwitchMonitor.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090010 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090011 /* PanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelController.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090012 /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090013 /* IntentEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentEntry.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090014 /* IntentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentStore.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090015 /* PromptPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptPanelView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090016 /* IntentRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentRowView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionRequestView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090019 /* PromptPanelViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptPanelViewModel.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809001A /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesHotkeyMonitor.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809001E /* KofiButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KofiButton.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5FA1B2C3D4E5F60708090029 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5FA1B2C3D4E5F60708090004 = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F60708090006 /* SquirrelTrap */,
+				5FA1B2C3D4E5F60708090005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5FA1B2C3D4E5F60708090005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F60708090003 /* SquirrelTrap.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5FA1B2C3D4E5F60708090006 /* SquirrelTrap */ = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F6070809000B /* SquirrelTrapApp.swift */,
+				5FA1B2C3D4E5F60708090007 /* Core */,
+				5FA1B2C3D4E5F60708090008 /* Persistence */,
+				5FA1B2C3D4E5F60708090009 /* Views */,
+				5FA1B2C3D4E5F6070809000E /* Assets.xcassets */,
+				5FA1B2C3D4E5F6070809000C /* Info.plist */,
+				5FA1B2C3D4E5F6070809000D /* SquirrelTrap.entitlements */,
+			);
+			path = SquirrelTrap;
+			sourceTree = "<group>";
+		};
+		5FA1B2C3D4E5F60708090007 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F6070809000F /* AppSwitchMonitor.swift */,
+				5FA1B2C3D4E5F60708090010 /* PermissionManager.swift */,
+				5FA1B2C3D4E5F60708090011 /* PanelController.swift */,
+				5FA1B2C3D4E5F60708090012 /* LaunchAtLoginManager.swift */,
+				5FA1B2C3D4E5F6070809001A /* AppPreferences.swift */,
+				5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		5FA1B2C3D4E5F60708090008 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F60708090013 /* IntentEntry.swift */,
+				5FA1B2C3D4E5F60708090014 /* IntentStore.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		5FA1B2C3D4E5F60708090009 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5FA1B2C3D4E5F60708090019 /* PromptPanelViewModel.swift */,
+				5FA1B2C3D4E5F60708090015 /* PromptPanelView.swift */,
+				5FA1B2C3D4E5F60708090016 /* IntentRowView.swift */,
+				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
+				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
+				5FA1B2C3D4E5F6070809001E /* KofiButton.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5FA1B2C3D4E5F60708090002 /* SquirrelTrap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FA1B2C3D4E5F6070809002D /* Build configuration list for PBXNativeTarget "SquirrelTrap" */;
+			buildPhases = (
+				5FA1B2C3D4E5F60708090029 /* Frameworks */,
+				5FA1B2C3D4E5F60708090027 /* Sources */,
+				5FA1B2C3D4E5F60708090028 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SquirrelTrap;
+			productName = SquirrelTrap;
+			productReference = 5FA1B2C3D4E5F60708090003 /* SquirrelTrap.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5FA1B2C3D4E5F60708090001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1520;
+				ORGANIZATIONNAME = "Jeremy Toeman";
+				TargetAttributes = {
+					5FA1B2C3D4E5F60708090002 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 5FA1B2C3D4E5F6070809002A /* Build configuration list for PBXProject "SquirrelTrap" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5FA1B2C3D4E5F60708090004;
+			productRefGroup = 5FA1B2C3D4E5F60708090005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5FA1B2C3D4E5F60708090002 /* SquirrelTrap */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5FA1B2C3D4E5F60708090028 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5FA1B2C3D4E5F607080900AD /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5FA1B2C3D4E5F60708090027 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5FA1B2C3D4E5F607080900A1 /* SquirrelTrapApp.swift in Sources */,
+				5FA1B2C3D4E5F607080900A2 /* AppSwitchMonitor.swift in Sources */,
+				5FA1B2C3D4E5F607080900A3 /* PermissionManager.swift in Sources */,
+				5FA1B2C3D4E5F607080900A4 /* PanelController.swift in Sources */,
+				5FA1B2C3D4E5F607080900A5 /* LaunchAtLoginManager.swift in Sources */,
+				5FA1B2C3D4E5F607080900A6 /* IntentEntry.swift in Sources */,
+				5FA1B2C3D4E5F607080900A7 /* IntentStore.swift in Sources */,
+				5FA1B2C3D4E5F607080900AC /* PromptPanelViewModel.swift in Sources */,
+				5FA1B2C3D4E5F607080900A8 /* PromptPanelView.swift in Sources */,
+				5FA1B2C3D4E5F607080900A9 /* IntentRowView.swift in Sources */,
+				5FA1B2C3D4E5F607080900AA /* PermissionRequestView.swift in Sources */,
+				5FA1B2C3D4E5F607080900AE /* AppPreferences.swift in Sources */,
+				5FA1B2C3D4E5F607080900AF /* PreferencesHotkeyMonitor.swift in Sources */,
+				5FA1B2C3D4E5F607080900B0 /* PreferencesView.swift in Sources */,
+				5FA1B2C3D4E5F607080900B2 /* KofiButton.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5FA1B2C3D4E5F6070809002B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5FA1B2C3D4E5F6070809002C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5FA1B2C3D4E5F6070809002E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3XFL38NZXQ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SquirrelTrap/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtoeman.squirreltrap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5FA1B2C3D4E5F6070809002F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3XFL38NZXQ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SquirrelTrap/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtoeman.squirreltrap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5FA1B2C3D4E5F6070809002A /* Build configuration list for PBXProject "SquirrelTrap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5FA1B2C3D4E5F6070809002B /* Debug */,
+				5FA1B2C3D4E5F6070809002C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5FA1B2C3D4E5F6070809002D /* Build configuration list for PBXNativeTarget "SquirrelTrap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5FA1B2C3D4E5F6070809002E /* Debug */,
+				5FA1B2C3D4E5F6070809002F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5FA1B2C3D4E5F60708090001 /* Project object */;
+}
