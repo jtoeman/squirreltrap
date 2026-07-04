@@ -1,0 +1,33 @@
+# 🐿️ Squirrel Trap
+
+A tiny macOS menu-bar app that catches you right before you get distracted.
+
+Every time you press **Cmd+Tab**, Squirrel Trap pops up a small floating prompt asking "what are you about to do?" — the moment right before a keyboard-driven app switch is exactly when it's easiest to get sidetracked chasing something unrelated. It also keeps a running checklist of what you said, so you can check things off as you actually get to them.
+
+## Download
+
+**[⬇ Download Squirrel Trap (latest release)](../../releases/latest)**
+
+Unzip it and drag `Squirrel Trap.app` anywhere you like (your Applications folder, or just your Desktop — it doesn't matter).
+
+## Before you open it
+
+This build is **not yet notarized by Apple** (that's coming soon), so macOS will initially refuse to open it. This is normal and expected — here's how to get past it:
+
+1. **Don't double-click it the first time.** Instead, **right-click (or Control-click) `Squirrel Trap.app` → Open**.
+2. macOS will still warn you. Click **Open** again to confirm. *(If macOS blocks it outright with no "Open" option, go to System Settings → Privacy & Security, scroll down, and click "Open Anyway" next to Squirrel Trap.)*
+3. After that first time, it opens normally forever — no more warnings.
+
+## First launch
+
+Squirrel Trap needs **Input Monitoring** permission to detect the Cmd+Tab keypress — it's a passive, listen-only observation and never records anything else you type. The app will show you a one-time explainer with a "Grant Access" button.
+
+If it doesn't show up automatically in **System Settings → Privacy & Security → Input Monitoring**, click the **+** button there and add `Squirrel Trap.app` manually, then toggle it on.
+
+## What it does with your data
+
+Nothing leaves your Mac. Everything you log is stored locally at `~/Library/Application Support/SquirrelTrap/`. There's no account, no server, no syncing.
+
+## Feedback
+
+This is an early, personal project — if something breaks or feels off, that's genuinely useful to know. Let me know directly.
