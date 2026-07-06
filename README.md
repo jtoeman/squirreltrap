@@ -31,3 +31,7 @@ Nothing leaves your Mac. Everything you log is stored locally at `~/Library/Appl
 ## Feedback
 
 This is an early, personal project — if something breaks or feels off, that's genuinely useful to know. Let me know directly.
+
+## Notes
+
+Conceived by human, coded by Claude, logo design by ChatGPT
