@@ -8,15 +8,7 @@ Every time you press **Cmd+Tab**, Squirrel Trap pops up a small floating prompt 
 
 **[⬇ Download Squirrel Trap (latest release)](../../releases/latest)**
 
-Unzip it and drag `Squirrel Trap.app` anywhere you like (your Applications folder, or just your Desktop — it doesn't matter).
-
-## Before you open it
-
-This build is **not yet notarized by Apple** (that's coming soon), so macOS will initially refuse to open it. This is normal and expected — here's how to get past it:
-
-1. **Don't double-click it the first time.** Instead, **right-click (or Control-click) `Squirrel Trap.app` → Open**.
-2. macOS will still warn you. Click **Open** again to confirm. *(If macOS blocks it outright with no "Open" option, go to System Settings → Privacy & Security, scroll down, and click "Open Anyway" next to Squirrel Trap.)*
-3. After that first time, it opens normally forever — no more warnings.
+Unzip it and drag `Squirrel Trap.app` anywhere you like (your Applications folder, or just your Desktop — it doesn't matter). It's signed with a Developer ID certificate and notarized by Apple, so it just opens normally — no security warnings, no workarounds needed.
 
 ## First launch
 
