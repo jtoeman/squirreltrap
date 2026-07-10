@@ -24,6 +24,19 @@ Nothing leaves your Mac. Everything you log is stored locally at `~/Library/Appl
 
 This is an early, personal project — if something breaks or feels off, that's genuinely useful to know. Let me know directly.
 
+## Uninstalling
+
+1. Quit Squirrel Trap — right-click the menu bar icon → Quit, or use the "Quit Squirrel Trap" button in Preferences.
+2. Delete `Squirrel Trap.app` (wherever you put it — Applications, Desktop, etc.) by dragging it to the Trash.
+3. If you turned on **Launch at Login**, remove it from System Settings → General → Login Items & Extensions.
+4. To also clear your logged history and preferences, delete:
+   - `~/Library/Application Support/SquirrelTrap/`
+   - `~/Library/Preferences/com.jtoeman.squirreltrap.plist`
+5. Optional: remove Squirrel Trap from System Settings → Privacy & Security → Input Monitoring — harmless to leave, but tidy to remove.
+
+That's everything — Squirrel Trap doesn't touch anything else on your Mac.
+
+
 ## Notes
 
 Conceived by human, coded by Claude, logo design by ChatGPT
