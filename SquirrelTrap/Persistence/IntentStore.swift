@@ -64,6 +64,62 @@ final class IntentStore: ObservableObject {
         save()
     }
 
+    /// Returns the IDs actually removed, so the caller can cancel any live
+    /// reminder Timers for them — IntentStore only owns the persisted data,
+    /// not the scheduler, so it can't cancel those itself.
+    @discardableResult
+    func clearCompleted() -> [UUID] {
+        let removedIDs = entries.filter { $0.completed }.map(\.id)
+        entries.removeAll { $0.completed }
+        save()
+        return removedIDs
+    }
+
+    @discardableResult
+    func clearAll() -> [UUID] {
+        let removedIDs = entries.map(\.id)
+        entries.removeAll()
+        save()
+        return removedIDs
+    }
+
+    func setReminder(id: UUID, date: Date?) {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
+        entries[index].reminderDate = date
+        save()
+    }
+
+    /// Every entry with a pending reminder, regardless of the rolling display
+    /// window — used both to restore timers on launch and to list them in the
+    /// menu bar.
+    var entriesWithActiveReminders: [IntentEntry] {
+        entries.filter { $0.reminderDate != nil }
+    }
+
+    /// Open (not-yet-completed) items only, full history rather than just the
+    /// last-20 rolling window. "completed"/"completedAt" columns are dropped
+    /// since every exported row is open by definition — they'd just be constant.
+    func csvExport() -> String {
+        let formatter = ISO8601DateFormatter()
+        var lines = ["text,favorite,createdAt"]
+        for entry in entries.filter({ !$0.completed }).sorted(by: { $0.createdAt < $1.createdAt }) {
+            let fields = [
+                csvField(entry.text),
+                csvField(entry.favorite ? "true" : "false"),
+                csvField(formatter.string(from: entry.createdAt))
+            ]
+            lines.append(fields.joined(separator: ","))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private func csvField(_ value: String) -> String {
+        guard value.contains(",") || value.contains("\"") || value.contains("\n") else {
+            return value
+        }
+        return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
     private func load() {
         guard let data = try? Data(contentsOf: fileURL) else { return }
         let decoder = JSONDecoder()

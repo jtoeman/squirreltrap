@@ -39,7 +39,7 @@ struct PromptPanelView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 320, alignment: .top)
+        .frame(width: 420, height: 340, alignment: .top)
         .onExitCommand(perform: onDismiss)
         .onAppear { if !viewModel.isShowingFavorites { isInputFocused = true } }
         .onChange(of: viewModel.focusToken) { _, _ in
@@ -50,7 +50,7 @@ struct PromptPanelView: View {
     private var header: some View {
         Text("Squirrel Trap")
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.panelTextSecondary)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 
@@ -59,10 +59,11 @@ struct PromptPanelView: View {
             Button(action: onOpenPreferences) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.accentColor)
             }
             .buttonStyle(.plain)
             .help("Preferences")
+            .accessibilityLabel("Preferences")
 
             Spacer()
 
@@ -77,14 +78,15 @@ struct PromptPanelView: View {
             if viewModel.isShowingFavorites {
                 Text("Favorites")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.panelTextPrimary)
                 Spacer(minLength: 0)
             } else {
                 TextField("What are you about to do?", text: $viewModel.draftText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.panelTextPrimary)
                     .padding(10)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                    .glassCard()
                     .focused($isInputFocused)
                     .onSubmit { viewModel.submit(dismiss: onDismiss) }
             }
@@ -94,10 +96,11 @@ struct PromptPanelView: View {
             } label: {
                 Image(systemName: viewModel.isShowingFavorites ? "star.fill" : "star")
                     .font(.system(size: 15))
-                    .foregroundStyle(viewModel.isShowingFavorites ? Color.yellow : Color.secondary)
+                    .foregroundStyle(viewModel.isShowingFavorites ? Color("SunnyYellow") : Color.accentColor.opacity(0.5))
             }
             .buttonStyle(.plain)
             .help("Favorites")
+            .accessibilityLabel(viewModel.isShowingFavorites ? "Back to your list" : "Show favorites")
         }
     }
 
@@ -111,15 +114,18 @@ struct PromptPanelView: View {
                         ForEach(pendingEntries) { entry in
                             IntentRowView(
                                 entry: entry,
+                                isHighlighted: entry.id == viewModel.highlightedEntryID,
                                 onToggleCompleted: { intentStore.toggleCompleted(id: entry.id) },
-                                onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) }
+                                onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
+                                onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
+                                onCancelReminder: { viewModel.cancelReminder(for: entry.id) }
                             )
                         }
 
                         if !completedEntries.isEmpty {
                             Text("Completed")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.panelTextSecondary)
                                 .padding(.top, pendingEntries.isEmpty ? 0 : 4)
 
                             ForEach(completedEntries) { entry in
@@ -142,7 +148,7 @@ struct PromptPanelView: View {
             if intentStore.favoriteEntries.isEmpty {
                 Text("No favorites yet — tap the star on any item to save it here.")
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.panelTextSecondary)
                 Spacer()
             } else {
                 ScrollView {
@@ -158,7 +164,7 @@ struct PromptPanelView: View {
                                             .foregroundStyle(Color.accentColor)
                                         Text(entry.text)
                                             .font(.system(size: 13))
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(Color.panelTextPrimary)
                                             .lineLimit(2)
                                             .multilineTextAlignment(.leading)
                                         Spacer(minLength: 0)
@@ -167,20 +173,22 @@ struct PromptPanelView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .help("Log this again")
+                                .accessibilityLabel("Log \(entry.text) again")
 
                                 Button {
                                     intentStore.toggleFavorite(id: entry.id)
                                 } label: {
                                     Image(systemName: "trash")
                                         .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.accentColor)
                                 }
                                 .buttonStyle(.plain)
                                 .help("Remove from favorites")
+                                .accessibilityLabel("Remove from favorites")
                             }
                             .padding(.vertical, 8)
                             .padding(.horizontal, 10)
-                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                            .glassCard()
                         }
                     }
                 }

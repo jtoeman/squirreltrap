@@ -7,10 +7,11 @@ struct PermissionRequestView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Input Monitoring Needed")
                 .font(.headline)
+                .foregroundStyle(Color.panelTextPrimary)
 
             Text("Squirrel Trap watches for the Cmd+Tab key combination to show a quick prompt when you switch apps. It does not record any other keystrokes.")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.panelTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
@@ -25,7 +26,7 @@ struct PermissionRequestView: View {
             }
         }
         .padding(20)
-        .frame(width: 420, height: 320, alignment: .top)
+        .frame(width: 420, height: 340, alignment: .top)
         .onExitCommand(perform: onDismiss)
     }
 }

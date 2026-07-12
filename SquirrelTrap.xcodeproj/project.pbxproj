@@ -23,6 +23,9 @@
 		5FA1B2C3D4E5F607080900AF /* PreferencesHotkeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */; };
 		5FA1B2C3D4E5F607080900B0 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */; };
 		5FA1B2C3D4E5F607080900B2 /* KofiButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001E /* KofiButton.swift */; };
+		5FA1B2C3D4E5F607080900B3 /* GlassTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */; };
+		5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */; };
+		5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +48,9 @@
 		5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesHotkeyMonitor.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809001E /* KofiButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KofiButton.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTheme.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeoutComboBox.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +103,7 @@
 				5FA1B2C3D4E5F60708090012 /* LaunchAtLoginManager.swift */,
 				5FA1B2C3D4E5F6070809001A /* AppPreferences.swift */,
 				5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */,
+				5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -119,6 +126,8 @@
 				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
 				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
 				5FA1B2C3D4E5F6070809001E /* KofiButton.swift */,
+				5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */,
+				5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -207,6 +216,9 @@
 				5FA1B2C3D4E5F607080900AF /* PreferencesHotkeyMonitor.swift in Sources */,
 				5FA1B2C3D4E5F607080900B0 /* PreferencesView.swift in Sources */,
 				5FA1B2C3D4E5F607080900B2 /* KofiButton.swift in Sources */,
+				5FA1B2C3D4E5F607080900B3 /* GlassTheme.swift in Sources */,
+				5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */,
+				5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,7 +314,7 @@
 				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3XFL38NZXQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -312,7 +324,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jtoeman.squirreltrap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -325,9 +337,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3XFL38NZXQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -337,7 +350,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jtoeman.squirreltrap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

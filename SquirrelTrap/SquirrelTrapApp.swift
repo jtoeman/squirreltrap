@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import UserNotifications
 
 @main
 struct SquirrelTrapApp: App {
@@ -8,9 +9,18 @@ struct SquirrelTrapApp: App {
 
     var body: some Scene {
         // No real windows of our own — everything is driven by NSStatusItem/NSPanel
-        // in AppDelegate. This just satisfies the App protocol's Scene requirement.
+        // in AppDelegate. A bare `Settings { }` scene silently binds Cmd+, to its
+        // own empty native window, firing alongside our own PreferencesHotkeyMonitor.
+        // Swapping to WindowGroup (which auto-opens at launch, unlike Settings) to
+        // dodge that traded one bug for another — a black window flashing at every
+        // launch, and SwiftUI's own window-creation/teardown machinery fighting with
+        // our panel's focus timing. Settings never auto-opens; stripping its default
+        // "Preferences…" command below removes the Cmd+, binding without any of that.
         Settings {
             EmptyView()
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) {}
         }
     }
 }
@@ -19,8 +29,13 @@ struct SquirrelTrapApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let intentStore = IntentStore()
     let preferences = AppPreferences()
+    let reminderScheduler = ReminderScheduler()
 
-    private lazy var panelController = PanelController(intentStore: intentStore, preferences: preferences)
+    private lazy var panelController = PanelController(
+        intentStore: intentStore,
+        preferences: preferences,
+        reminderScheduler: reminderScheduler
+    )
     private let monitor = AppSwitchMonitor()
     private let preferencesHotkey = PreferencesHotkeyMonitor()
     private var permissionPollTimer: Timer?
@@ -40,6 +55,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.panelController.showPreferencesPanel()
         }
         preferencesHotkey.start()
+
+        // A reminder firing calls back with the entry ID — same panel Cmd+Tab
+        // uses, just with that specific task highlighted so it's unmistakable
+        // which one the reminder was for. Also posts a native banner/sound,
+        // same as how the built-in macOS Timer app announces completion.
+        reminderScheduler.onFire = { [weak self] entryID in
+            guard let self else { return }
+            let taskText = self.intentStore.entries.first { $0.id == entryID }?.text
+            self.intentStore.setReminder(id: entryID, date: nil)
+            self.postReminderNotification(taskText: taskText)
+            self.panelController.showPromptPanel(highlighting: entryID)
+        }
+        // Timers don't survive a quit — re-derive them from what's persisted so
+        // a reminder set before the app was quit still fires (immediately, if
+        // its time already passed while the app was closed).
+        reminderScheduler.restore(from: intentStore.entries)
+
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
 
         preferences.$showMenuBarIcon
             .sink { [weak self] visible in self?.updateStatusItem(visible: visible) }
@@ -103,6 +136,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showStatusMenu(for button: NSStatusBarButton) {
         let menu = NSMenu()
 
+        let activeReminders = intentStore.entriesWithActiveReminders
+            .sorted { ($0.reminderDate ?? .distantFuture) < ($1.reminderDate ?? .distantFuture) }
+        if !activeReminders.isEmpty {
+            let header = NSMenuItem(title: "Reminders", action: nil, keyEquivalent: "")
+            header.isEnabled = false
+            menu.addItem(header)
+
+            for entry in activeReminders {
+                guard let reminderDate = entry.reminderDate else { continue }
+                let remaining = max(Int(reminderDate.timeIntervalSinceNow), 0)
+                let title = "\(entry.text) — \(remaining / 60):\(String(format: "%02d", remaining % 60))"
+                let item = NSMenuItem(title: title, action: #selector(reminderMenuItemClicked(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = entry.id
+                menu.addItem(item)
+            }
+
+            menu.addItem(.separator())
+        }
+
         let preferencesItem = NSMenuItem(title: "Preferences…", action: #selector(openPreferencesFromStatusMenu), keyEquivalent: ",")
         preferencesItem.target = self
         menu.addItem(preferencesItem)
@@ -117,5 +170,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openPreferencesFromStatusMenu() {
         panelController.showPreferencesPanel()
+    }
+
+    @objc private func reminderMenuItemClicked(_ sender: NSMenuItem) {
+        guard let entryID = sender.representedObject as? UUID else { return }
+        panelController.showPromptPanel(highlighting: entryID)
+    }
+
+    private func postReminderNotification(taskText: String?) {
+        let content = UNMutableNotificationContent()
+        content.title = "Squirrel Trap Reminder"
+        content.body = taskText ?? "Time to check your task"
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
     }
 }
