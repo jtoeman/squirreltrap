@@ -40,7 +40,6 @@ struct PromptPanelView: View {
         .padding(.bottom, 12)
         .padding(.top, 10)
         .frame(width: 420, height: 340, alignment: .top)
-        .onExitCommand(perform: onDismiss)
         .onAppear { if !viewModel.isShowingFavorites { isInputFocused = true } }
         .onChange(of: viewModel.focusToken) { _, _ in
             if !viewModel.isShowingFavorites { isInputFocused = true }
