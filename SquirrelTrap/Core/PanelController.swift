@@ -68,6 +68,7 @@ final class PanelController: NSObject {
     private var preferencesHostingController: NSHostingController<PreferencesView>?
     private var globalClickMonitor: Any?
     private var appActivationObserver: NSObjectProtocol?
+    private var hasReclaimedFocusForCurrentShow = false
     var onQuit: (() -> Void)?
     // Lets the dismiss-on-any-non-text-key logic below tell a bare Cmd tap
     // (dismiss) apart from a real Cmd+Tab switch (never dismiss) — see
@@ -108,6 +109,13 @@ final class PanelController: NSObject {
         // Every Cmd+Tab ends with some other app's window becoming key — that's not
         // the user clicking away, it's the switch itself completing. Reclaim key focus
         // right after so the panel keeps the caret instead of self-dismissing.
+        //
+        // This must only happen for THAT ONE activation, not every subsequent app
+        // activation while the panel happens to still be visible — logging showed
+        // reclaiming unconditionally here fights any app the user deliberately
+        // switches to afterward (e.g. Activity Monitor) for real key status,
+        // sometimes leaving Escape/keystrokes going to the wrong app entirely.
+        // hasReclaimedFocusForCurrentShow (reset in present()) limits it to once.
         appActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
@@ -115,7 +123,9 @@ final class PanelController: NSObject {
         ) { [weak self] notification in
             let app = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName ?? "?"
             FileHandle.standardError.write("Squirrel Trap DEBUG: [didActivateApplication] \(app)\n".data(using: .utf8)!)
-            self?.reclaimKeyFocusIfVisible()
+            guard let self, !self.hasReclaimedFocusForCurrentShow else { return }
+            self.hasReclaimedFocusForCurrentShow = true
+            self.reclaimKeyFocusIfVisible()
         }
     }
 
@@ -151,7 +161,10 @@ final class PanelController: NSObject {
                         FileHandle.standardError.write("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n".data(using: .utf8)!)
                         self?.handleCancelOperation()
                     },
-                    onOpenPreferences: { [weak self] in self?.showPreferencesPanel() }
+                    onOpenPreferences: { [weak self] in self?.showPreferencesPanel() },
+                    onDragHandleHoverChanged: { [weak self] hovering in
+                        self?.panel?.isMovableByWindowBackground = !hovering
+                    }
                 )
             )
             promptHostingController = controller
@@ -511,6 +524,7 @@ final class PanelController: NSObject {
         // (gear -> Preferences, back -> prompt) should stay exactly where it is.
         if !panel.isVisible {
             positionOnActiveScreen(panel)
+            hasReclaimedFocusForCurrentShow = false
         }
         panel.makeKeyAndOrderFront(nil)
         FileHandle.standardError.write("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)

@@ -7,13 +7,21 @@ struct PromptPanelView: View {
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
+    var onDragHandleHoverChanged: (Bool) -> Void
 
-    init(viewModel: PromptPanelViewModel, onDismiss: @escaping () -> Void, onEscape: @escaping () -> Void, onOpenPreferences: @escaping () -> Void) {
+    init(
+        viewModel: PromptPanelViewModel,
+        onDismiss: @escaping () -> Void,
+        onEscape: @escaping () -> Void,
+        onOpenPreferences: @escaping () -> Void,
+        onDragHandleHoverChanged: @escaping (Bool) -> Void = { _ in }
+    ) {
         self.viewModel = viewModel
         self.intentStore = viewModel.intentStore
         self.onDismiss = onDismiss
         self.onEscape = onEscape
         self.onOpenPreferences = onOpenPreferences
+        self.onDragHandleHoverChanged = onDragHandleHoverChanged
     }
 
     // Pending items always float above completed ones, each group newest-first.
@@ -127,7 +135,8 @@ struct PromptPanelView: View {
                                 onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                 onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
                                 onCancelReminder: { viewModel.cancelReminder(for: entry.id) },
-                                onDrop: { draggedID in intentStore.movePendingEntry(id: draggedID, before: entry.id) }
+                                onDrop: { draggedID in intentStore.movePendingEntry(id: draggedID, before: entry.id) },
+                                onDragHandleHoverChanged: onDragHandleHoverChanged
                             )
                         }
 
