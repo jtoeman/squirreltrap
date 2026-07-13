@@ -452,6 +452,20 @@ final class PanelController: NSObject {
 
         panel = newPanel
 
+        // Diagnostic only: pinpoint the exact moment the panel silently loses
+        // key status, independent of (and possibly not explained by) any
+        // didActivateApplicationNotification we're already logging.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: newPanel, queue: .main
+        ) { _ in
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [panel] didResignKey, NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: newPanel, queue: .main
+        ) { _ in
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [panel] didBecomeKey, NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+        }
+
         // Fires immediately with the current value on subscribe, so the
         // right view is showing from the very first present() — no extra
         // "apply initial state" call needed.
