@@ -11,6 +11,7 @@ final class DismissiblePanel: NSPanel {
     override var canBecomeKey: Bool { true }
 
     override func cancelOperation(_ sender: Any?) {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [cancelOperation] AppKit cancelOperation fired\n".data(using: .utf8)!)
         onCancel?()
     }
 }
@@ -144,7 +145,10 @@ final class PanelController: NSObject {
                 rootView: PromptPanelView(
                     viewModel: promptViewModel,
                     onDismiss: { [weak self] in self?.hidePanel() },
-                    onEscape: { [weak self] in self?.handleCancelOperation() },
+                    onEscape: { [weak self] in
+                        FileHandle.standardError.write("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n".data(using: .utf8)!)
+                        self?.handleCancelOperation()
+                    },
                     onOpenPreferences: { [weak self] in self?.showPreferencesPanel() }
                 )
             )
@@ -191,6 +195,8 @@ final class PanelController: NSObject {
     }
 
     func hidePanel() {
+        let stack = Thread.callStackSymbols.prefix(6).joined(separator: "\n  ")
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [hidePanel] called, panel.isVisible=\(panel?.isVisible ?? false)\n  \(stack)\n".data(using: .utf8)!)
         suppressEscapeDismiss = false
         panel?.orderOut(nil)
         panel?.alphaValue = 1
@@ -200,7 +206,11 @@ final class PanelController: NSObject {
     }
 
     private func reclaimKeyFocusIfVisible() {
-        guard let panel, panel.isVisible else { return }
+        guard let panel, panel.isVisible else {
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n".data(using: .utf8)!)
+            return
+        }
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] reclaiming key focus\n".data(using: .utf8)!)
         panel.makeKeyAndOrderFront(nil)
     }
 
@@ -266,18 +276,24 @@ final class PanelController: NSObject {
     /// real Cmd+Tab — isSwitchGestureActive is the only way to tell those apart,
     /// since the system consumes the Tab keydown before it ever reaches us.
     private func handlePotentialDismissKey(_ event: NSEvent) {
-        guard !suppressEscapeDismiss, let panel, panel.isVisible else { return }
+        guard !suppressEscapeDismiss, let panel, panel.isVisible else {
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] ignored (suppressEscapeDismiss=\(suppressEscapeDismiss), panelVisible=\(panel?.isVisible ?? false))\n".data(using: .utf8)!)
+            return
+        }
         let watched: NSEvent.ModifierFlags = [.command, .option, .function]
 
         switch event.type {
         case .keyDown:
             modifiersHeldAtRisk = []
             if event.keyCode == 53 {
+                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] keyDown Escape -> handleCancelOperation\n".data(using: .utf8)!)
                 handleCancelOperation()
                 return
             }
             let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] keyDown keyCode=\(event.keyCode) flags=\(flags.rawValue)\n".data(using: .utf8)!)
             if flags.contains(.command) || flags.contains(.control) {
+                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] Cmd/Control combo -> handleCancelOperation\n".data(using: .utf8)!)
                 handleCancelOperation()
             }
 
@@ -285,8 +301,10 @@ final class PanelController: NSObject {
             let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             let currentlyHeld = flags.intersection(watched)
             let wasHeld = modifiersHeldAtRisk
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] flagsChanged currentlyHeld=\(currentlyHeld.rawValue) wasHeld=\(wasHeld.rawValue)\n".data(using: .utf8)!)
             if currentlyHeld.isEmpty, !wasHeld.isEmpty {
                 let wasRealSwitch = wasHeld.contains(.command) && (isSwitchGestureActive?() ?? false)
+                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] bare modifier released, wasRealSwitch=\(wasRealSwitch)\n".data(using: .utf8)!)
                 if !wasRealSwitch {
                     handleCancelOperation()
                 }
@@ -443,10 +461,12 @@ final class PanelController: NSObject {
     }
 
     @objc private func closeButtonClicked() {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [closeButtonClicked] X button clicked\n".data(using: .utf8)!)
         hidePanel()
     }
 
     private func handleCancelOperation() {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [handleCancelOperation] suppressEscapeDismiss=\(suppressEscapeDismiss)\n".data(using: .utf8)!)
         guard !suppressEscapeDismiss else { return }
         hidePanel()
     }
@@ -466,6 +486,8 @@ final class PanelController: NSObject {
     }
 
     private func present() {
+        let stack = Thread.callStackSymbols.prefix(6).joined(separator: "\n  ")
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [present] called\n  \(stack)\n".data(using: .utf8)!)
         guard let panel else { return }
         // Only reposition when the panel is opening fresh (Cmd+Tab, menu bar,
         // Cmd+,). Navigating between content within an already-visible panel
