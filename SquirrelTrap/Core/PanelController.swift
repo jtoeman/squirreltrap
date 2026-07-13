@@ -112,7 +112,9 @@ final class PanelController: NSObject {
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
             queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] notification in
+            let app = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName ?? "?"
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [didActivateApplication] \(app)\n".data(using: .utf8)!)
             self?.reclaimKeyFocusIfVisible()
         }
     }
@@ -212,6 +214,7 @@ final class PanelController: NSObject {
         }
         FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] reclaiming key focus\n".data(using: .utf8)!)
         panel.makeKeyAndOrderFront(nil)
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
     }
 
     /// Clicking into whatever app you switched to should dismiss the panel — but that
@@ -496,6 +499,7 @@ final class PanelController: NSObject {
             positionOnActiveScreen(panel)
         }
         panel.makeKeyAndOrderFront(nil)
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
         installGlobalClickMonitor()
         startActivityMonitoring()
         installDismissKeyMonitor()
