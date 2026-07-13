@@ -5,12 +5,14 @@ struct PromptPanelView: View {
     @ObservedObject var intentStore: IntentStore
     @FocusState private var isInputFocused: Bool
     var onDismiss: () -> Void
+    var onEscape: () -> Void
     var onOpenPreferences: () -> Void
 
-    init(viewModel: PromptPanelViewModel, onDismiss: @escaping () -> Void, onOpenPreferences: @escaping () -> Void) {
+    init(viewModel: PromptPanelViewModel, onDismiss: @escaping () -> Void, onEscape: @escaping () -> Void, onOpenPreferences: @escaping () -> Void) {
         self.viewModel = viewModel
         self.intentStore = viewModel.intentStore
         self.onDismiss = onDismiss
+        self.onEscape = onEscape
         self.onOpenPreferences = onOpenPreferences
     }
 
@@ -40,6 +42,13 @@ struct PromptPanelView: View {
         .padding(.bottom, 12)
         .padding(.top, 10)
         .frame(width: 420, height: 340, alignment: .top)
+        // SwiftUI's own exit-command path — needed alongside DismissiblePanel's
+        // AppKit-level cancelOperation because a focused TextField sometimes
+        // swallows Escape before it ever reaches the responder chain. Both
+        // paths funnel into the same guarded handler (see PanelController),
+        // so whichever one actually fires, confirmation dialogs are still
+        // respected and double-firing is harmless.
+        .onExitCommand(perform: onEscape)
         .onAppear { if !viewModel.isShowingFavorites { isInputFocused = true } }
         .onChange(of: viewModel.focusToken) { _, _ in
             if !viewModel.isShowingFavorites { isInputFocused = true }

@@ -68,12 +68,25 @@ final class PanelController: NSObject {
     private var globalClickMonitor: Any?
     private var appActivationObserver: NSObjectProtocol?
     var onQuit: (() -> Void)?
+    // Lets the dismiss-on-any-non-text-key logic below tell a bare Cmd tap
+    // (dismiss) apart from a real Cmd+Tab switch (never dismiss) — see
+    // handlePotentialDismissKey. Wired by AppDelegate to AppSwitchMonitor,
+    // which is the only thing with visibility into the real Cmd+Tab gesture
+    // (via its own CGEventTap; a held Cmd key alone looks identical to us).
+    var isSwitchGestureActive: (() -> Bool)?
 
     // Fades the panel out if you never interact with it, so an accidental or
     // half-considered Cmd+Tab doesn't just leave it sitting on screen forever.
     // Duration is user-configurable (AppPreferences.inactivityTimeout).
     private var dismissTimer: Timer?
     private var localActivityMonitor: Any?
+
+    // Any non-text keyboard input (Escape, a Cmd/Control shortcut combo, or
+    // just tapping Cmd/Option/Fn alone) dismisses the panel — the idea being
+    // that reaching for any of those means your attention already moved on
+    // from typing an intent. Shift and Cmd+Tab itself are the only exceptions.
+    private var dismissKeyMonitor: Any?
+    private var modifiersHeldAtRisk: NSEvent.ModifierFlags = []
 
     // Escape reliably dismisses the panel via DismissiblePanel.cancelOperation
     // (see that type's comment) — but that override fires at the AppKit level,
@@ -113,6 +126,9 @@ final class PanelController: NSObject {
         if let localActivityMonitor {
             NSEvent.removeMonitor(localActivityMonitor)
         }
+        if let dismissKeyMonitor {
+            NSEvent.removeMonitor(dismissKeyMonitor)
+        }
         dismissTimer?.invalidate()
     }
 
@@ -128,6 +144,7 @@ final class PanelController: NSObject {
                 rootView: PromptPanelView(
                     viewModel: promptViewModel,
                     onDismiss: { [weak self] in self?.hidePanel() },
+                    onEscape: { [weak self] in self?.handleCancelOperation() },
                     onOpenPreferences: { [weak self] in self?.showPreferencesPanel() }
                 )
             )
@@ -179,6 +196,7 @@ final class PanelController: NSObject {
         panel?.alphaValue = 1
         removeGlobalClickMonitor()
         stopActivityMonitoring()
+        removeDismissKeyMonitor()
     }
 
     private func reclaimKeyFocusIfVisible() {
@@ -221,6 +239,64 @@ final class PanelController: NSObject {
             return event
         }
         registerActivity()
+    }
+
+    private func installDismissKeyMonitor() {
+        removeDismissKeyMonitor()
+        modifiersHeldAtRisk = []
+        dismissKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { [weak self] event in
+            self?.handlePotentialDismissKey(event)
+            return event
+        }
+    }
+
+    private func removeDismissKeyMonitor() {
+        if let dismissKeyMonitor {
+            NSEvent.removeMonitor(dismissKeyMonitor)
+        }
+        dismissKeyMonitor = nil
+        modifiersHeldAtRisk = []
+    }
+
+    /// Escape and Cmd/Control combos dismiss immediately (any key pressed while
+    /// Cmd/Control is held is clearly a shortcut, not typing — Option is exempt
+    /// since Option+letter is how accented characters are typed). Bare taps of
+    /// Cmd, Option, or Fn alone (held with nothing else pressed, then released)
+    /// also dismiss, EXCEPT a bare Cmd tap that turns out to be the start of a
+    /// real Cmd+Tab — isSwitchGestureActive is the only way to tell those apart,
+    /// since the system consumes the Tab keydown before it ever reaches us.
+    private func handlePotentialDismissKey(_ event: NSEvent) {
+        guard !suppressEscapeDismiss, let panel, panel.isVisible else { return }
+        let watched: NSEvent.ModifierFlags = [.command, .option, .function]
+
+        switch event.type {
+        case .keyDown:
+            modifiersHeldAtRisk = []
+            if event.keyCode == 53 {
+                handleCancelOperation()
+                return
+            }
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            if flags.contains(.command) || flags.contains(.control) {
+                handleCancelOperation()
+            }
+
+        case .flagsChanged:
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            let currentlyHeld = flags.intersection(watched)
+            let wasHeld = modifiersHeldAtRisk
+            if currentlyHeld.isEmpty, !wasHeld.isEmpty {
+                let wasRealSwitch = wasHeld.contains(.command) && (isSwitchGestureActive?() ?? false)
+                if !wasRealSwitch {
+                    handleCancelOperation()
+                }
+            } else {
+                modifiersHeldAtRisk = currentlyHeld
+            }
+
+        default:
+            break
+        }
     }
 
     private func stopActivityMonitoring() {
@@ -400,6 +476,7 @@ final class PanelController: NSObject {
         panel.makeKeyAndOrderFront(nil)
         installGlobalClickMonitor()
         startActivityMonitoring()
+        installDismissKeyMonitor()
     }
 
     /// Centers on whichever display currently has the mouse cursor, since that's

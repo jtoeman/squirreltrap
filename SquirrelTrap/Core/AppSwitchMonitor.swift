@@ -10,10 +10,21 @@ final class AppSwitchMonitor {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var isGestureActive = false
+    private var wasCommandHeld = false
 
     private let tabKeyCode = CGKeyCode(kVK_Tab)
 
     var onSwitchGestureDetected: (() -> Void)?
+
+    /// True if a real Cmd+Tab was seen at any point during the Cmd key's
+    /// *current* hold — reset only when Cmd is freshly pressed down, so a
+    /// reader checking this right as Cmd is released still sees whether this
+    /// hold included a switch, unaffected by isGestureActive resetting at
+    /// that same release moment. Lets PanelController tell a bare Cmd tap
+    /// apart from a real Cmd+Tab, which it otherwise can't — the Tab keydown
+    /// of a real switch is consumed by the system switcher before any local
+    /// event monitor ever sees it.
+    private(set) var switchDetectedDuringCurrentHold = false
 
     @discardableResult
     func start() -> Bool {
@@ -73,6 +84,7 @@ final class AppSwitchMonitor {
             let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
             guard commandHeld, keyCode == tabKeyCode, !isGestureActive else { return }
             isGestureActive = true
+            switchDetectedDuringCurrentHold = true
             FileHandle.standardError.write("Squirrel Trap DEBUG: gesture detected, firing callback\n".data(using: .utf8)!)
             let callback = onSwitchGestureDetected
             DispatchQueue.main.async {
@@ -80,6 +92,10 @@ final class AppSwitchMonitor {
             }
 
         case .flagsChanged:
+            if commandHeld, !wasCommandHeld {
+                switchDetectedDuringCurrentHold = false
+            }
+            wasCommandHeld = commandHeld
             if isGestureActive && !commandHeld {
                 isGestureActive = false
             }

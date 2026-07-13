@@ -50,6 +50,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.onSwitchGestureDetected = { [weak self] in
             self?.panelController.showPromptPanel()
         }
+        panelController.isSwitchGestureActive = { [weak monitor] in
+            monitor?.switchDetectedDuringCurrentHold ?? false
+        }
 
         preferencesHotkey.onTriggered = { [weak self] in
             self?.panelController.showPreferencesPanel()
