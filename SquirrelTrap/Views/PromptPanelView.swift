@@ -120,13 +120,14 @@ struct PromptPanelView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(pendingEntries) { entry in
-                            IntentRowView(
+                            PendingRowView(
                                 entry: entry,
                                 isHighlighted: entry.id == viewModel.highlightedEntryID,
                                 onToggleCompleted: { intentStore.toggleCompleted(id: entry.id) },
                                 onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                 onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
-                                onCancelReminder: { viewModel.cancelReminder(for: entry.id) }
+                                onCancelReminder: { viewModel.cancelReminder(for: entry.id) },
+                                onDrop: { draggedID in intentStore.movePendingEntry(id: draggedID, before: entry.id) }
                             )
                         }
 

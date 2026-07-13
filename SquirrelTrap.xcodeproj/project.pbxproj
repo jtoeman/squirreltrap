@@ -26,6 +26,7 @@
 		5FA1B2C3D4E5F607080900B3 /* GlassTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */; };
 		5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */; };
 		5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */; };
+		5FA1B2C3D4E5F607080900B6 /* PendingRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTheme.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeoutComboBox.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingRowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +125,7 @@
 				5FA1B2C3D4E5F60708090019 /* PromptPanelViewModel.swift */,
 				5FA1B2C3D4E5F60708090015 /* PromptPanelView.swift */,
 				5FA1B2C3D4E5F60708090016 /* IntentRowView.swift */,
+				5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */,
 				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
 				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
 				5FA1B2C3D4E5F6070809001E /* KofiButton.swift */,
@@ -219,6 +222,7 @@
 				5FA1B2C3D4E5F607080900B3 /* GlassTheme.swift in Sources */,
 				5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */,
 				5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */,
+				5FA1B2C3D4E5F607080900B6 /* PendingRowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,8 +341,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3XFL38NZXQ;
@@ -353,6 +357,7 @@
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jtoeman.squirreltrap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

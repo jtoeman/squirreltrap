@@ -27,9 +27,12 @@ final class IntentStore: ObservableObject {
         load()
     }
 
-    /// Last N entries, newest first. Everything else stays on disk indefinitely.
+    /// Last N entries. `entries` is maintained in display order directly (new
+    /// ones inserted at the front, pending ones manually reorderable via
+    /// movePendingEntry) rather than re-sorted here, so drag-to-reorder in the
+    /// UI actually sticks. Everything else stays on disk indefinitely.
     var visibleEntries: [IntentEntry] {
-        Array(entries.sorted { $0.createdAt > $1.createdAt }.prefix(visibleLimit))
+        Array(entries.prefix(visibleLimit))
     }
 
     /// All favorited entries, newest first — a curated list the user maintains
@@ -41,9 +44,25 @@ final class IntentStore: ObservableObject {
     @discardableResult
     func add(text: String) -> IntentEntry {
         let entry = IntentEntry(text: text)
-        entries.append(entry)
+        entries.insert(entry, at: 0)
         save()
         return entry
+    }
+
+    /// Moves a pending entry to sit immediately before another one — the only
+    /// mutation drag-to-reorder needs. Leaves every other entry's relative
+    /// order (completed items, anything outside the visible window) untouched.
+    func movePendingEntry(id draggedID: UUID, before targetID: UUID) {
+        guard draggedID != targetID,
+              let draggedIndex = entries.firstIndex(where: { $0.id == draggedID }),
+              !entries[draggedIndex].completed else { return }
+        let draggedEntry = entries.remove(at: draggedIndex)
+        guard let targetIndex = entries.firstIndex(where: { $0.id == targetID }) else {
+            entries.insert(draggedEntry, at: draggedIndex)
+            return
+        }
+        entries.insert(draggedEntry, at: targetIndex)
+        save()
     }
 
     func toggleCompleted(id: UUID) {
