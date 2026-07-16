@@ -9,6 +9,7 @@ struct IntentRowView: View {
     var onCancelReminder: (() -> Void)?
     var onDelete: (() -> Void)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isShowingReminderPicker = false
 
     private static let reminderDurations: [(label: String, seconds: TimeInterval)] = [
         ("1 min", 1 * 60),
@@ -78,36 +79,40 @@ struct IntentRowView: View {
 
     @ViewBuilder
     private func reminderControl(onSetReminder: @escaping (TimeInterval) -> Void, onCancelReminder: @escaping () -> Void) -> some View {
-        // Button and Menu have different intrinsic sizing by default — without
-        // pinning both to the same fixed frame, swapping between them (active vs.
-        // inactive reminder state) visibly shifted this icon off the row's
-        // vertical center relative to the star/checkbox next to it.
-        Group {
+        // Both states are the same plain Button — a Menu (used here previously
+        // for the "pick a duration" state) has different internal chrome than
+        // a Button even inside an identical outer frame, which kept shifting
+        // this icon a couple points off the row's vertical center relative to
+        // the star/checkbox next to it. Using a popover instead of Menu keeps
+        // both states pixel-identical.
+        Button {
             if entry.reminderDate != nil {
-                Button(action: onCancelReminder) {
-                    Image(systemName: "alarm.fill")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.plain)
-                .help("Cancel reminder")
-                .accessibilityLabel("Cancel reminder")
+                onCancelReminder()
             } else {
-                Menu {
-                    ForEach(Self.reminderDurations, id: \.seconds) { duration in
-                        Button(duration.label) { onSetReminder(duration.seconds) }
-                    }
-                } label: {
-                    Image(systemName: "alarm")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.accentColor.opacity(0.5))
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .help("Remind me later")
-                .accessibilityLabel("Remind me later")
+                isShowingReminderPicker = true
             }
+        } label: {
+            Image(systemName: entry.reminderDate != nil ? "alarm.fill" : "alarm")
+                .font(.system(size: 13))
+                .foregroundStyle(entry.reminderDate != nil ? Color.accentColor : Color.accentColor.opacity(0.5))
         }
+        .buttonStyle(.plain)
         .frame(width: 20, height: 20)
+        .help(entry.reminderDate != nil ? "Cancel reminder" : "Remind me later")
+        .accessibilityLabel(entry.reminderDate != nil ? "Cancel reminder" : "Remind me later")
+        .popover(isPresented: $isShowingReminderPicker) {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Self.reminderDurations, id: \.seconds) { duration in
+                    Button(duration.label) {
+                        onSetReminder(duration.seconds)
+                        isShowingReminderPicker = false
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                }
+            }
+            .padding(.vertical, 4)
+        }
     }
 }

@@ -4,6 +4,7 @@ struct PromptPanelView: View {
     @ObservedObject var viewModel: PromptPanelViewModel
     @ObservedObject var intentStore: IntentStore
     @FocusState private var isInputFocused: Bool
+    @State private var isEndDropTargeted = false
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
@@ -138,6 +139,22 @@ struct PromptPanelView: View {
                                 onDrop: { draggedID in intentStore.movePendingEntry(id: draggedID, before: entry.id) },
                                 onDragHandleHoverChanged: onDragHandleHoverChanged
                             )
+                        }
+
+                        // Every row above only offers "drop before me" — without
+                        // this, there's no way to drag something to the very
+                        // bottom of the pending list.
+                        if !pendingEntries.isEmpty {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isEndDropTargeted ? Color.accentColor.opacity(0.24) : Color.clear)
+                                .frame(height: 14)
+                                .dropDestination(for: String.self) { items, _ in
+                                    guard let draggedIDString = items.first, let draggedID = UUID(uuidString: draggedIDString) else { return false }
+                                    intentStore.movePendingEntryToEnd(id: draggedID)
+                                    return true
+                                } isTargeted: { targeted in
+                                    isEndDropTargeted = targeted
+                                }
                         }
 
                         if !completedEntries.isEmpty {

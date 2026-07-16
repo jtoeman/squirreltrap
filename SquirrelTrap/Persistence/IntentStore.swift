@@ -65,6 +65,21 @@ final class IntentStore: ObservableObject {
         save()
     }
 
+    /// Moves a pending entry to sit after every other pending entry — every row
+    /// only offers "drop before me", so without this there's no way to drop
+    /// something at the very bottom of the pending list.
+    func movePendingEntryToEnd(id draggedID: UUID) {
+        guard let draggedIndex = entries.firstIndex(where: { $0.id == draggedID }),
+              !entries[draggedIndex].completed else { return }
+        let draggedEntry = entries.remove(at: draggedIndex)
+        if let lastPendingIndex = entries.lastIndex(where: { !$0.completed }) {
+            entries.insert(draggedEntry, at: lastPendingIndex + 1)
+        } else {
+            entries.insert(draggedEntry, at: 0)
+        }
+        save()
+    }
+
     func toggleCompleted(id: UUID) {
         guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
         entries[index].completed.toggle()
