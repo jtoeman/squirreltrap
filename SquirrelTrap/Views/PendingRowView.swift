@@ -29,10 +29,23 @@ struct PendingRowView: View {
                 // hovering the handle (before mouseDown) lets .draggable win.
                 .onHover { hovering in onDragHandleHoverChanged(hovering) }
                 .draggable(entry.id.uuidString) {
-                    Text(entry.text)
-                        .font(.system(size: 13))
-                        .padding(8)
-                        .glassCard()
+                    // Explicit width matters: without it, a preview dragged from
+                    // this small handle rendered as just the system drag-operation
+                    // badge with no visible content at all.
+                    HStack(spacing: 10) {
+                        Image(systemName: "circle")
+                            .font(.system(size: 17))
+                            .foregroundStyle(Color.accentColor.opacity(0.5))
+                        Text(entry.text)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.panelTextPrimary)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 10)
+                    .frame(width: 380, alignment: .leading)
+                    .glassCard()
                 }
 
             IntentRowView(

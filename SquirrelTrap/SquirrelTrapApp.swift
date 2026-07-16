@@ -118,7 +118,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem == nil else { return }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "arrow.left.arrow.right.circle", accessibilityDescription: "Squirrel Trap")
+        item.button?.title = "🐿️"
+        item.button?.setAccessibilityLabel("Squirrel Trap")
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked(_:))
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
