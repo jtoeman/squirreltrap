@@ -57,6 +57,17 @@ struct PreferencesView: View {
             }
             .font(.system(size: 12))
 
+            HStack(spacing: 6) {
+                Text("Snooze for")
+                    .foregroundStyle(Color.panelTextSecondary)
+                TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
+                    .frame(width: 56)
+                Text("minutes")
+                    .foregroundStyle(Color.panelTextSecondary)
+            }
+            .font(.system(size: 12))
+            .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
+
             Divider()
                 .padding(.top, 50)
 

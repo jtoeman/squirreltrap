@@ -110,26 +110,16 @@ struct PromptPanelView: View {
     /// Rapidly switching apps can turn the popup itself into the annoyance —
     /// Snooze suppresses Cmd+Tab triggering it for a bit (the menu bar icon
     /// and Cmd+, still work, and clicking the icon cancels the snooze early).
+    /// Duration is configured in Preferences, not here.
     private var snoozeControl: some View {
-        HStack(spacing: 4) {
-            Button {
-                preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
-                onDismiss()
-            } label: {
-                Image(systemName: "moon.zzz")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.accentColor)
-            }
-            .buttonStyle(.plain)
-            .help("Snooze Cmd+Tab for a while")
-            .accessibilityLabel("Snooze")
-
-            TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
-                .frame(width: 40)
-            Text("min")
-                .font(.system(size: 11))
-                .foregroundStyle(Color.panelTextSecondary)
+        Button("Snooze") {
+            preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+            onDismiss()
         }
+        .buttonStyle(.plain)
+        .font(.system(size: 12))
+        .foregroundStyle(Color.accentColor)
+        .help("Snooze Cmd+Tab for a while")
     }
 
     /// Text entry (or, in favorites mode, a label) plus the favorites toggle —

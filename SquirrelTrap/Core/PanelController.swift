@@ -157,6 +157,13 @@ final class PanelController: NSObject {
     }
 
     func showPromptPanel(highlighting entryID: UUID? = nil) {
+        // Re-arm the once-per-show reclaim guard on every invocation, not just
+        // when the panel transitions from hidden to visible: a second Cmd+Tab
+        // while the panel is already up from the first one previously left
+        // this permanently latched true, silently blocking every subsequent
+        // reclaim for the rest of that session (focus only ever landing in
+        // the text field on the very first Cmd+Tab).
+        hasReclaimedFocusForCurrentShow = false
         // Clear the draft/favorites-mode before the window appears, so there's no
         // flash of stale content — but the focus *trigger* below has to wait until
         // after present() actually makes the window key, otherwise SwiftUI applies
