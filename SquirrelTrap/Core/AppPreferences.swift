@@ -56,6 +56,18 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(lastReminderSyncAt, forKey: Keys.lastReminderSyncAt) }
     }
 
+    /// Non-nil while Cmd+Tab is suppressed — the menu bar icon and Cmd+,
+    /// still work as usual and clicking the menu bar icon cancels it early.
+    @Published var snoozeUntil: Date? {
+        didSet { UserDefaults.standard.set(snoozeUntil, forKey: Keys.snoozeUntil) }
+    }
+
+    /// Last picked snooze duration, so the combo box remembers it like
+    /// inactivityTimeout does.
+    @Published var snoozeDurationMinutes: Double {
+        didSet { UserDefaults.standard.set(snoozeDurationMinutes, forKey: Keys.snoozeDurationMinutes) }
+    }
+
     private enum Keys {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let inactivityTimeout = "inactivityTimeout"
@@ -64,6 +76,8 @@ final class AppPreferences: ObservableObject {
         static let reminderSyncEveryNInvocations = "reminderSyncEveryNInvocations"
         static let reminderSyncListIdentifier = "reminderSyncListIdentifier"
         static let lastReminderSyncAt = "lastReminderSyncAt"
+        static let snoozeUntil = "snoozeUntil"
+        static let snoozeDurationMinutes = "snoozeDurationMinutes"
     }
 
     init() {
@@ -100,5 +114,13 @@ final class AppPreferences: ObservableObject {
 
         reminderSyncListIdentifier = UserDefaults.standard.string(forKey: Keys.reminderSyncListIdentifier)
         lastReminderSyncAt = UserDefaults.standard.object(forKey: Keys.lastReminderSyncAt) as? Date
+
+        snoozeUntil = UserDefaults.standard.object(forKey: Keys.snoozeUntil) as? Date
+
+        if UserDefaults.standard.object(forKey: Keys.snoozeDurationMinutes) == nil {
+            snoozeDurationMinutes = 15
+        } else {
+            snoozeDurationMinutes = UserDefaults.standard.double(forKey: Keys.snoozeDurationMinutes)
+        }
     }
 }

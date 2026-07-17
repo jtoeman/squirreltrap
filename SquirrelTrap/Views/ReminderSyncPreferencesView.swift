@@ -7,7 +7,7 @@ import SwiftUI
 /// Preferences/Prompt already swap content.
 struct ReminderSyncPreferencesView: View {
     @ObservedObject var preferences: AppPreferences
-    let syncEngine: ReminderSyncEngine
+    @ObservedObject var syncEngine: ReminderSyncEngine
     var onBack: () -> Void
 
     @State private var availableLists: [EKCalendar] = []
@@ -29,6 +29,13 @@ struct ReminderSyncPreferencesView: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
+                .onChange(of: preferences.reminderSyncDirection) { oldValue, newValue in
+                    // Turning sync on for the first time should force picking a
+                    // list right away (which forces the permission prompt too),
+                    // rather than silently no-op'ing on the next sync attempt.
+                    guard oldValue == .off, newValue != .off, preferences.reminderSyncListIdentifier == nil else { return }
+                    Task { await loadLists() }
+                }
             }
             .font(.system(size: 12))
 
@@ -46,6 +53,22 @@ struct ReminderSyncPreferencesView: View {
             Divider()
 
             listPicker
+
+            HStack(spacing: 6) {
+                Button("Sync Now") {
+                    Task { await syncEngine.sync() }
+                }
+                .controlSize(.small)
+                .disabled(preferences.reminderSyncDirection == .off || preferences.reminderSyncListIdentifier == nil || syncEngine.isSyncing)
+
+                if syncEngine.isSyncing {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Syncing Reminders…")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.panelTextSecondary)
+                }
+            }
 
             Text("Only the task text and done/not-done status sync — no due dates, no favorites, no in-app reminder timers.")
                 .font(.system(size: 11))

@@ -77,6 +77,9 @@ final class PanelController: NSObject {
     // like Preferences -> back.
     private var invocationsSinceLastSync = 0
     var onQuit: (() -> Void)?
+    /// Lets AppDelegate swap the menu bar icon to the app icon while the
+    /// panel is visible, and back to the default otherwise.
+    var onVisibilityChanged: ((Bool) -> Void)?
     // Lets the dismiss-on-any-non-text-key logic below tell a bare Cmd tap
     // (dismiss) apart from a real Cmd+Tab switch (never dismiss) — see
     // handlePotentialDismissKey. Wired by AppDelegate to AppSwitchMonitor,
@@ -164,6 +167,8 @@ final class PanelController: NSObject {
             let controller = NSHostingController(
                 rootView: PromptPanelView(
                     viewModel: promptViewModel,
+                    preferences: preferences,
+                    reminderSyncEngine: reminderSyncEngine,
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onEscape: { [weak self] in
                         FileHandle.standardError.write("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n".data(using: .utf8)!)
@@ -244,6 +249,7 @@ final class PanelController: NSObject {
         removeGlobalClickMonitor()
         stopActivityMonitoring()
         removeDismissKeyMonitor()
+        onVisibilityChanged?(false)
     }
 
     private func reclaimKeyFocusIfVisible() {
@@ -558,6 +564,7 @@ final class PanelController: NSObject {
         installGlobalClickMonitor()
         startActivityMonitoring()
         installDismissKeyMonitor()
+        onVisibilityChanged?(true)
     }
 
     /// Sync only ever runs as a side effect of showing the panel — never a

@@ -207,22 +207,11 @@ final class IntentStore: ObservableObject {
         save()
     }
 
-    /// Removes the entry linked to a Reminder that was deleted externally
-    /// (pull direction) — no tombstone needed, since the Reminder itself is
-    /// already gone and won't be seen again on a future pull.
-    func deleteEntry(withReminderSyncID reminderSyncID: String) {
-        entries.removeAll { $0.reminderSyncID == reminderSyncID }
-        save()
-    }
-
+    /// Sync never deletes anything on either side (see ReminderSyncEngine) —
+    /// this only guards against a pull re-creating an entry you deleted
+    /// locally while its Reminder still exists.
     func isTombstoned(reminderSyncID: String) -> Bool {
         tombstones.contains { $0.reminderSyncID == reminderSyncID }
-    }
-
-    /// IDs of Reminders that were deleted locally — the push side of sync
-    /// uses this to also remove them from Apple Reminders if they still exist.
-    var tombstonedReminderSyncIDs: [String] {
-        tombstones.map(\.reminderSyncID)
     }
 
     private func recordTombstoneIfSynced(_ entry: IntentEntry) {

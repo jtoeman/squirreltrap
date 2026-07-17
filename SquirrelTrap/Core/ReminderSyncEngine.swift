@@ -7,7 +7,9 @@ import Foundation
 /// title + completion status only (not due dates, favorites, or Squirrel
 /// Trap's own in-app reminder timers, which are an unrelated concept).
 @MainActor
-final class ReminderSyncEngine {
+final class ReminderSyncEngine: ObservableObject {
+    @Published private(set) var isSyncing = false
+
     private let intentStore: IntentStore
     private let preferences: AppPreferences
     private let eventStore = EKEventStore()
@@ -37,6 +39,9 @@ final class ReminderSyncEngine {
               let calendar = eventStore.calendar(withIdentifier: listID) else { return }
         guard await requestAccess() else { return }
 
+        isSyncing = true
+        defer { isSyncing = false }
+
         let reminders = await fetchReminders(in: calendar)
         let remindersByID = Dictionary(uniqueKeysWithValues: reminders.map { ($0.calendarItemIdentifier, $0) })
         let lastSync = preferences.lastReminderSyncAt ?? .distantPast
@@ -60,10 +65,12 @@ final class ReminderSyncEngine {
         }
     }
 
-    /// New/changed Reminders flow into Squirrel Trap. A Reminder that vanished
-    /// removes its linked entry (nothing to preserve — the plan's "keep
-    /// forever" guarantee is specifically about your own history, not a
-    /// mirror of something already deleted at the source).
+    /// New/changed Reminders flow into Squirrel Trap. Sync never deletes
+    /// anything on either side (a first pull once wiped out a local list when
+    /// a stale/incomplete fetch made linked entries look like their Reminder
+    /// had vanished) — a Reminder disappearing has no effect on the local
+    /// entry at all. isTombstoned still guards against re-creating an entry
+    /// you deleted locally, since that's a creation-skip, not a deletion.
     private func pull(reminders: [EKReminder], remindersByID: [String: EKReminder], direction: ReminderSyncDirection, lastSync: Date) {
         let localEntries = intentStore.entries
 
@@ -93,11 +100,6 @@ final class ReminderSyncEngine {
                     modifiedAt: remoteModified
                 )
             }
-        }
-
-        for entry in localEntries {
-            guard let syncID = entry.reminderSyncID, remindersByID[syncID] == nil else { continue }
-            intentStore.deleteEntry(withReminderSyncID: syncID)
         }
     }
 
@@ -133,11 +135,6 @@ final class ReminderSyncEngine {
             reminder.title = entry.text
             reminder.isCompleted = entry.completed
             try? eventStore.save(reminder, commit: false)
-        }
-
-        for syncID in intentStore.tombstonedReminderSyncIDs {
-            guard let reminder = remindersByID[syncID] else { continue }
-            try? eventStore.remove(reminder, commit: false)
         }
 
         try? eventStore.commit()

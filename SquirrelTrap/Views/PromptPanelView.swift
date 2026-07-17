@@ -3,6 +3,8 @@ import SwiftUI
 struct PromptPanelView: View {
     @ObservedObject var viewModel: PromptPanelViewModel
     @ObservedObject var intentStore: IntentStore
+    @ObservedObject var preferences: AppPreferences
+    @ObservedObject var reminderSyncEngine: ReminderSyncEngine
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
     var onDismiss: () -> Void
@@ -12,6 +14,8 @@ struct PromptPanelView: View {
 
     init(
         viewModel: PromptPanelViewModel,
+        preferences: AppPreferences,
+        reminderSyncEngine: ReminderSyncEngine,
         onDismiss: @escaping () -> Void,
         onEscape: @escaping () -> Void,
         onOpenPreferences: @escaping () -> Void,
@@ -19,6 +23,8 @@ struct PromptPanelView: View {
     ) {
         self.viewModel = viewModel
         self.intentStore = viewModel.intentStore
+        self.preferences = preferences
+        self.reminderSyncEngine = reminderSyncEngine
         self.onDismiss = onDismiss
         self.onEscape = onEscape
         self.onOpenPreferences = onOpenPreferences
@@ -37,6 +43,17 @@ struct PromptPanelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+
+            if reminderSyncEngine.isSyncing {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Syncing Reminders…")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.panelTextSecondary)
+                }
+            }
+
             actionRow
 
             if viewModel.isShowingFavorites {
@@ -72,7 +89,7 @@ struct PromptPanelView: View {
     }
 
     private var footer: some View {
-        HStack {
+        HStack(spacing: 8) {
             Button(action: onOpenPreferences) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13))
@@ -82,9 +99,36 @@ struct PromptPanelView: View {
             .help("Preferences")
             .accessibilityLabel("Preferences")
 
+            snoozeControl
+
             Spacer()
 
             KofiButton(onOpened: onDismiss)
+        }
+    }
+
+    /// Rapidly switching apps can turn the popup itself into the annoyance —
+    /// Snooze suppresses Cmd+Tab triggering it for a bit (the menu bar icon
+    /// and Cmd+, still work, and clicking the icon cancels the snooze early).
+    private var snoozeControl: some View {
+        HStack(spacing: 4) {
+            Button {
+                preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+                onDismiss()
+            } label: {
+                Image(systemName: "moon.zzz")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .help("Snooze Cmd+Tab for a while")
+            .accessibilityLabel("Snooze")
+
+            TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
+                .frame(width: 40)
+            Text("min")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.panelTextSecondary)
         }
     }
 

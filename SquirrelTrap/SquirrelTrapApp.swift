@@ -43,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var permissionPollTimer: Timer?
     private var statusItem: NSStatusItem?
     private var cancellables = Set<AnyCancellable>()
+    private var isPanelVisible = false
+    private var snoozeExpiryTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         panelController.onQuit = {
@@ -50,11 +52,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         monitor.onSwitchGestureDetected = { [weak self] in
-            self?.panelController.showPromptPanel()
+            guard let self else { return }
+            // Snooze only suppresses the Cmd+Tab trigger -- the menu bar icon
+            // and Cmd+, still open the panel normally.
+            if let snoozeUntil = self.preferences.snoozeUntil, snoozeUntil > Date() { return }
+            self.panelController.showPromptPanel()
         }
         panelController.isSwitchGestureActive = { [weak monitor] in
             monitor?.switchDetectedDuringCurrentHold ?? false
         }
+        panelController.onVisibilityChanged = { [weak self] visible in
+            self?.isPanelVisible = visible
+            self?.updateMenuBarAppearance()
+        }
+        preferences.$snoozeUntil
+            .sink { [weak self] snoozeUntil in self?.handleSnoozeChanged(snoozeUntil) }
+            .store(in: &cancellables)
 
         preferencesHotkey.onTriggered = { [weak self] in
             self?.panelController.showPreferencesPanel()
@@ -120,23 +133,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem == nil else { return }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.title = "🐿️"
         item.button?.setAccessibilityLabel("Squirrel Trap")
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked(_:))
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem = item
+        updateMenuBarAppearance()
     }
 
-    // Left click opens the same panel Cmd+Tab does; right click surfaces the
-    // secondary actions (Preferences, Quit) via a plain popped-up NSMenu.
+    // Left click opens the same panel Cmd+Tab does (also canceling any active
+    // snooze, since deliberately opening it yourself means you're done
+    // avoiding it); right click surfaces the secondary actions (Preferences,
+    // Quit) via a plain popped-up NSMenu.
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
         guard let event = NSApp.currentEvent else { return }
         if event.type == .rightMouseUp {
             showStatusMenu(for: sender)
         } else {
+            preferences.snoozeUntil = nil
             panelController.showPromptPanel()
         }
+    }
+
+    /// Menu bar icon reflects one of three states: the app icon while the
+    /// panel is visible, a grayed-out default while snoozed, or the plain
+    /// default otherwise.
+    private func updateMenuBarAppearance() {
+        guard let button = statusItem?.button else { return }
+        if isPanelVisible {
+            button.title = ""
+            let icon = NSApp.applicationIconImage?.copy() as? NSImage
+            icon?.size = NSSize(width: 18, height: 18)
+            button.image = icon
+            button.alphaValue = 1.0
+        } else {
+            button.image = nil
+            button.title = "🐿️"
+            let isSnoozed = (preferences.snoozeUntil.map { $0 > Date() }) ?? false
+            button.alphaValue = isSnoozed ? 0.35 : 1.0
+        }
+    }
+
+    /// Snoozing doesn't need any background polling of its own — this timer
+    /// only exists so the grayed-out icon visibly resets the moment a snooze
+    /// naturally expires, instead of staying gray until the next click.
+    private func handleSnoozeChanged(_ snoozeUntil: Date?) {
+        snoozeExpiryTimer?.invalidate()
+        snoozeExpiryTimer = nil
+        if let snoozeUntil, snoozeUntil > Date() {
+            snoozeExpiryTimer = Timer.scheduledTimer(withTimeInterval: snoozeUntil.timeIntervalSinceNow, repeats: false) { [weak self] _ in
+                Task { @MainActor in
+                    self?.preferences.snoozeUntil = nil
+                }
+            }
+        }
+        updateMenuBarAppearance()
     }
 
     private func showStatusMenu(for button: NSStatusBarButton) {
