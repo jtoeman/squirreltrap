@@ -30,11 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let intentStore = IntentStore()
     let preferences = AppPreferences()
     let reminderScheduler = ReminderScheduler()
+    private lazy var reminderSyncEngine = ReminderSyncEngine(intentStore: intentStore, preferences: preferences)
 
     private lazy var panelController = PanelController(
         intentStore: intentStore,
         preferences: preferences,
-        reminderScheduler: reminderScheduler
+        reminderScheduler: reminderScheduler,
+        reminderSyncEngine: reminderSyncEngine
     )
     private let monitor = AppSwitchMonitor()
     private let preferencesHotkey = PreferencesHotkeyMonitor()

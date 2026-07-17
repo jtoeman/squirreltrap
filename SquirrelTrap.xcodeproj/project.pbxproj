@@ -27,6 +27,8 @@
 		5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */; };
 		5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */; };
 		5FA1B2C3D4E5F607080900B6 /* PendingRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */; };
+		5FA1B2C3D4E5F607080900B7 /* ReminderSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */; };
+		5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +55,8 @@
 		5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeoutComboBox.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingRowView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncEngine.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncPreferencesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +110,7 @@
 				5FA1B2C3D4E5F6070809001A /* AppPreferences.swift */,
 				5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */,
 				5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */,
+				5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -128,6 +133,7 @@
 				5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */,
 				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
 				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
+				5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */,
 				5FA1B2C3D4E5F6070809001E /* KofiButton.swift */,
 				5FA1B2C3D4E5F6070809001F /* GlassTheme.swift */,
 				5FA1B2C3D4E5F60708090021 /* TimeoutComboBox.swift */,
@@ -223,6 +229,8 @@
 				5FA1B2C3D4E5F607080900B4 /* ReminderScheduler.swift in Sources */,
 				5FA1B2C3D4E5F607080900B5 /* TimeoutComboBox.swift in Sources */,
 				5FA1B2C3D4E5F607080900B6 /* PendingRowView.swift in Sources */,
+				5FA1B2C3D4E5F607080900B7 /* ReminderSyncEngine.swift in Sources */,
+				5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -13,6 +13,7 @@ struct PreferencesView: View {
     var onDismiss: () -> Void
     var onQuit: () -> Void
     var onConfirmationActiveChanged: (Bool) -> Void = { _ in }
+    var onOpenReminderSync: () -> Void = {}
 
     // Escape while "Clear Finished/All Items" is up should cancel just that
     // confirmation, not the whole panel too — see the matching guard on
@@ -72,6 +73,9 @@ struct PreferencesView: View {
                         pasteboard.setString(intentStore.csvExport(), forType: .string)
                     }
                     .help("Copies your open (not completed) items as CSV to the clipboard")
+
+                    Button("Reminders Sync…", action: onOpenReminderSync)
+                        .help("Optionally sync with a Reminders list")
 
                     Button("Clear Finished Items", role: .destructive) {
                         showingClearCompletedConfirm = true

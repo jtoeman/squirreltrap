@@ -1,11 +1,24 @@
 import Foundation
 
+/// Records that a synced entry was intentionally deleted locally, so a later
+/// pull doesn't resurrect it just because its linked Reminder still exists
+/// (e.g. push is off, or the push side of a bidirectional sync hasn't run
+/// yet). Bounded, not a general history log — see ReminderSyncEngine.
+private struct DeletionTombstone: Codable {
+    let reminderSyncID: String
+    let deletedAt: Date
+}
+
 @MainActor
 final class IntentStore: ObservableObject {
     @Published private(set) var entries: [IntentEntry] = []
 
     private let visibleLimit = 20
+    private let tombstoneLimit = 20
+    private let tombstoneMaxAge: TimeInterval = 7 * 24 * 60 * 60
     private let fileURL: URL
+    private let tombstoneFileURL: URL
+    private var tombstones: [DeletionTombstone] = []
 
     init() {
         let appSupport = FileManager.default
@@ -13,6 +26,7 @@ final class IntentStore: ObservableObject {
         let supportDir = appSupport.appendingPathComponent("SquirrelTrap", isDirectory: true)
         try? FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
         fileURL = supportDir.appendingPathComponent("entries.json")
+        tombstoneFileURL = supportDir.appendingPathComponent("deletion_tombstones.json")
 
         // One-time migration from the app's previous name (SwitchLog) so history
         // logged before the rename isn't silently orphaned. Copy, not move — leaves
@@ -25,6 +39,7 @@ final class IntentStore: ObservableObject {
         }
 
         load()
+        loadTombstones()
     }
 
     /// Last N entries. `entries` is maintained in display order directly (new
@@ -84,6 +99,7 @@ final class IntentStore: ObservableObject {
         guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
         entries[index].completed.toggle()
         entries[index].completedAt = entries[index].completed ? Date() : nil
+        entries[index].lastModifiedAt = Date()
         save()
     }
 
@@ -94,6 +110,9 @@ final class IntentStore: ObservableObject {
     }
 
     func delete(id: UUID) {
+        if let entry = entries.first(where: { $0.id == id }) {
+            recordTombstoneIfSynced(entry)
+        }
         entries.removeAll { $0.id == id }
         save()
     }
@@ -103,14 +122,16 @@ final class IntentStore: ObservableObject {
     /// not the scheduler, so it can't cancel those itself.
     @discardableResult
     func clearCompleted() -> [UUID] {
-        let removedIDs = entries.filter { $0.completed }.map(\.id)
+        let removed = entries.filter { $0.completed }
+        removed.forEach(recordTombstoneIfSynced)
         entries.removeAll { $0.completed }
         save()
-        return removedIDs
+        return removed.map(\.id)
     }
 
     @discardableResult
     func clearAll() -> [UUID] {
+        entries.forEach(recordTombstoneIfSynced)
         let removedIDs = entries.map(\.id)
         entries.removeAll()
         save()
@@ -152,6 +173,86 @@ final class IntentStore: ObservableObject {
             return value
         }
         return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    // MARK: - Reminders sync support
+
+    /// Sets the linked EKReminder identifier the first time an entry is
+    /// pushed to Reminders.
+    func linkReminderSyncID(id: UUID, reminderSyncID: String) {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
+        entries[index].reminderSyncID = reminderSyncID
+        save()
+    }
+
+    /// Creates a new entry for a Reminder that doesn't yet have a matching
+    /// Squirrel Trap entry (pull direction).
+    @discardableResult
+    func createEntry(fromPulledReminderID reminderSyncID: String, text: String, completed: Bool, modifiedAt: Date) -> IntentEntry {
+        let entry = IntentEntry(text: text, completed: completed, completedAt: completed ? modifiedAt : nil, reminderSyncID: reminderSyncID, lastModifiedAt: modifiedAt)
+        entries.insert(entry, at: 0)
+        save()
+        return entry
+    }
+
+    /// Applies a pulled title/completion change to an already-linked entry.
+    func updateEntry(withReminderSyncID reminderSyncID: String, text: String, completed: Bool, modifiedAt: Date) {
+        guard let index = entries.firstIndex(where: { $0.reminderSyncID == reminderSyncID }) else { return }
+        entries[index].text = text
+        if entries[index].completed != completed {
+            entries[index].completed = completed
+            entries[index].completedAt = completed ? modifiedAt : nil
+        }
+        entries[index].lastModifiedAt = modifiedAt
+        save()
+    }
+
+    /// Removes the entry linked to a Reminder that was deleted externally
+    /// (pull direction) — no tombstone needed, since the Reminder itself is
+    /// already gone and won't be seen again on a future pull.
+    func deleteEntry(withReminderSyncID reminderSyncID: String) {
+        entries.removeAll { $0.reminderSyncID == reminderSyncID }
+        save()
+    }
+
+    func isTombstoned(reminderSyncID: String) -> Bool {
+        tombstones.contains { $0.reminderSyncID == reminderSyncID }
+    }
+
+    /// IDs of Reminders that were deleted locally — the push side of sync
+    /// uses this to also remove them from Apple Reminders if they still exist.
+    var tombstonedReminderSyncIDs: [String] {
+        tombstones.map(\.reminderSyncID)
+    }
+
+    private func recordTombstoneIfSynced(_ entry: IntentEntry) {
+        guard let reminderSyncID = entry.reminderSyncID else { return }
+        tombstones.append(DeletionTombstone(reminderSyncID: reminderSyncID, deletedAt: Date()))
+        pruneTombstones()
+        saveTombstones()
+    }
+
+    private func pruneTombstones() {
+        let cutoff = Date().addingTimeInterval(-tombstoneMaxAge)
+        tombstones.removeAll { $0.deletedAt < cutoff }
+        if tombstones.count > tombstoneLimit {
+            tombstones.removeFirst(tombstones.count - tombstoneLimit)
+        }
+    }
+
+    private func loadTombstones() {
+        guard let data = try? Data(contentsOf: tombstoneFileURL) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        tombstones = (try? decoder.decode([DeletionTombstone].self, from: data)) ?? []
+        pruneTombstones()
+    }
+
+    private func saveTombstones() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(tombstones) else { return }
+        try? data.write(to: tombstoneFileURL, options: .atomic)
     }
 
     private func load() {

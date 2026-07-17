@@ -1,5 +1,24 @@
 import Foundation
 
+enum ReminderSyncDirection: String, CaseIterable {
+    case off
+    case pushOnly
+    case pullOnly
+    case bidirectional
+
+    var label: String {
+        switch self {
+        case .off: return "Off"
+        case .pushOnly: return "Push to Reminders"
+        case .pullOnly: return "Pull from Reminders"
+        case .bidirectional: return "Both ways"
+        }
+    }
+
+    var pushEnabled: Bool { self == .pushOnly || self == .bidirectional }
+    var pullEnabled: Bool { self == .pullOnly || self == .bidirectional }
+}
+
 @MainActor
 final class AppPreferences: ObservableObject {
     @Published var showMenuBarIcon: Bool {
@@ -19,10 +38,32 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(translucencyEnabled, forKey: Keys.translucencyEnabled) }
     }
 
+    @Published var reminderSyncDirection: ReminderSyncDirection {
+        didSet { UserDefaults.standard.set(reminderSyncDirection.rawValue, forKey: Keys.reminderSyncDirection) }
+    }
+
+    /// Sync runs as a side effect of normal use — every Nth time the panel
+    /// shows — rather than any background polling/observer.
+    @Published var reminderSyncEveryNInvocations: Int {
+        didSet { UserDefaults.standard.set(reminderSyncEveryNInvocations, forKey: Keys.reminderSyncEveryNInvocations) }
+    }
+
+    @Published var reminderSyncListIdentifier: String? {
+        didSet { UserDefaults.standard.set(reminderSyncListIdentifier, forKey: Keys.reminderSyncListIdentifier) }
+    }
+
+    @Published var lastReminderSyncAt: Date? {
+        didSet { UserDefaults.standard.set(lastReminderSyncAt, forKey: Keys.lastReminderSyncAt) }
+    }
+
     private enum Keys {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let inactivityTimeout = "inactivityTimeout"
         static let translucencyEnabled = "translucencyEnabled"
+        static let reminderSyncDirection = "reminderSyncDirection"
+        static let reminderSyncEveryNInvocations = "reminderSyncEveryNInvocations"
+        static let reminderSyncListIdentifier = "reminderSyncListIdentifier"
+        static let lastReminderSyncAt = "lastReminderSyncAt"
     }
 
     init() {
@@ -43,5 +84,21 @@ final class AppPreferences: ObservableObject {
         } else {
             translucencyEnabled = UserDefaults.standard.bool(forKey: Keys.translucencyEnabled)
         }
+
+        if let rawValue = UserDefaults.standard.string(forKey: Keys.reminderSyncDirection),
+           let direction = ReminderSyncDirection(rawValue: rawValue) {
+            reminderSyncDirection = direction
+        } else {
+            reminderSyncDirection = .off
+        }
+
+        if UserDefaults.standard.object(forKey: Keys.reminderSyncEveryNInvocations) == nil {
+            reminderSyncEveryNInvocations = 5
+        } else {
+            reminderSyncEveryNInvocations = UserDefaults.standard.integer(forKey: Keys.reminderSyncEveryNInvocations)
+        }
+
+        reminderSyncListIdentifier = UserDefaults.standard.string(forKey: Keys.reminderSyncListIdentifier)
+        lastReminderSyncAt = UserDefaults.standard.object(forKey: Keys.lastReminderSyncAt) as? Date
     }
 }

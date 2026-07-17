@@ -21,6 +21,7 @@ final class PanelController: NSObject {
     private let intentStore: IntentStore
     private let preferences: AppPreferences
     private let reminderScheduler: ReminderScheduler
+    private let reminderSyncEngine: ReminderSyncEngine
     private let promptViewModel: PromptPanelViewModel
 
     // The visible card is 420x340 (340 = 320 + one half-row, so an overflowing
@@ -66,9 +67,15 @@ final class PanelController: NSObject {
     private var promptHostingController: NSHostingController<PromptPanelView>?
     private var permissionHostingController: NSHostingController<PermissionRequestView>?
     private var preferencesHostingController: NSHostingController<PreferencesView>?
+    private var reminderSyncPreferencesHostingController: NSHostingController<ReminderSyncPreferencesView>?
     private var globalClickMonitor: Any?
     private var appActivationObserver: NSObjectProtocol?
     private var hasReclaimedFocusForCurrentShow = false
+    // Sync only ever runs as a side effect of normal use — every Nth fresh
+    // panel show — never in the background. Counted the same "fresh show"
+    // way hasReclaimedFocusForCurrentShow is, not on content-switch shows
+    // like Preferences -> back.
+    private var invocationsSinceLastSync = 0
     var onQuit: (() -> Void)?
     // Lets the dismiss-on-any-non-text-key logic below tell a bare Cmd tap
     // (dismiss) apart from a real Cmd+Tab switch (never dismiss) — see
@@ -99,10 +106,11 @@ final class PanelController: NSObject {
     // confirmationDialog is presented.
     private var suppressEscapeDismiss = false
 
-    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler) {
+    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler, reminderSyncEngine: ReminderSyncEngine) {
         self.intentStore = intentStore
         self.preferences = preferences
         self.reminderScheduler = reminderScheduler
+        self.reminderSyncEngine = reminderSyncEngine
         self.promptViewModel = PromptPanelViewModel(intentStore: intentStore, reminderScheduler: reminderScheduler)
         super.init()
 
@@ -199,10 +207,28 @@ final class PanelController: NSObject {
                     onBack: { [weak self] in self?.showPromptPanel() },
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onQuit: { [weak self] in self?.onQuit?() },
-                    onConfirmationActiveChanged: { [weak self] active in self?.suppressEscapeDismiss = active }
+                    onConfirmationActiveChanged: { [weak self] active in self?.suppressEscapeDismiss = active },
+                    onOpenReminderSync: { [weak self] in self?.showReminderSyncPreferencesPanel() }
                 )
             )
             preferencesHostingController = controller
+            return controller
+        }()
+        setContent(controller.view)
+        present()
+    }
+
+    func showReminderSyncPreferencesPanel() {
+        _ = obtainPanel()
+        let controller = reminderSyncPreferencesHostingController ?? {
+            let controller = NSHostingController(
+                rootView: ReminderSyncPreferencesView(
+                    preferences: preferences,
+                    syncEngine: reminderSyncEngine,
+                    onBack: { [weak self] in self?.showPreferencesPanel() }
+                )
+            )
+            reminderSyncPreferencesHostingController = controller
             return controller
         }()
         setContent(controller.view)
@@ -525,12 +551,27 @@ final class PanelController: NSObject {
         if !panel.isVisible {
             positionOnActiveScreen(panel)
             hasReclaimedFocusForCurrentShow = false
+            maybeTriggerReminderSync()
         }
         panel.makeKeyAndOrderFront(nil)
         FileHandle.standardError.write("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
         installGlobalClickMonitor()
         startActivityMonitoring()
         installDismissKeyMonitor()
+    }
+
+    /// Sync only ever runs as a side effect of showing the panel — never a
+    /// background timer/observer — and only every Nth fresh show, so the
+    /// core "instant popup on Cmd+Tab" feel never waits on an EventKit round
+    /// trip. Runs asynchronously; doesn't block the panel appearing.
+    private func maybeTriggerReminderSync() {
+        guard preferences.reminderSyncDirection != .off else { return }
+        invocationsSinceLastSync += 1
+        guard invocationsSinceLastSync >= max(1, preferences.reminderSyncEveryNInvocations) else { return }
+        invocationsSinceLastSync = 0
+        Task { [reminderSyncEngine] in
+            await reminderSyncEngine.sync()
+        }
     }
 
     /// Centers on whichever display currently has the mouse cursor, since that's

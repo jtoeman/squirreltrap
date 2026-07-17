@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSInputMonitoringUsageDescription</key>
 	<string>Squirrel Trap observes the Cmd+Tab key combination to show a quick prompt when you switch apps. It does not record any other keystrokes.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Squirrel Trap can optionally sync your to-do list with a Reminders list you choose, only when you enable it in Preferences.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>
