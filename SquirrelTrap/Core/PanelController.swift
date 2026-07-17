@@ -533,21 +533,28 @@ final class PanelController: NSObject {
         baseView.addSubview(content)
         contentContainer = content
 
-        // Sits above contentContainer (added after it), same frame, hidden
-        // until snoozeAndFadeOut() shows it — the blur/tint layers stay
-        // visible underneath so it still reads as the same glass card.
+        // Sits above contentContainer (added after it), hidden until
+        // snoozeAndFadeOut() shows it — the blur/tint layers stay visible
+        // underneath so it still reads as the same glass card. Auto Layout
+        // (not a manual frame, unlike its siblings here) is what actually
+        // centers it both ways regardless of how long the message text is.
         let snoozeLabel = NSTextField(labelWithString: "")
-        snoozeLabel.frame = content.frame
         snoozeLabel.alignment = .center
-        snoozeLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        snoozeLabel.font = .systemFont(ofSize: 22, weight: .semibold)
         snoozeLabel.textColor = .white
         snoozeLabel.backgroundColor = .clear
         snoozeLabel.isBezeled = false
         snoozeLabel.isEditable = false
-        snoozeLabel.maximumNumberOfLines = 2
+        snoozeLabel.maximumNumberOfLines = 3
         snoozeLabel.lineBreakMode = .byWordWrapping
         snoozeLabel.isHidden = true
+        snoozeLabel.translatesAutoresizingMaskIntoConstraints = false
         baseView.addSubview(snoozeLabel)
+        NSLayoutConstraint.activate([
+            snoozeLabel.centerXAnchor.constraint(equalTo: baseView.centerXAnchor),
+            snoozeLabel.centerYAnchor.constraint(equalTo: baseView.centerYAnchor),
+            snoozeLabel.widthAnchor.constraint(lessThanOrEqualToConstant: cardSize.width - 40)
+        ])
         snoozeMessageLabel = snoozeLabel
 
         let closeImage = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Close")?
