@@ -99,27 +99,20 @@ struct PromptPanelView: View {
             .help("Preferences")
             .accessibilityLabel("Preferences")
 
-            snoozeControl
+            // Rapidly switching apps can turn the popup itself into the
+            // annoyance — Snooze suppresses Cmd+Tab triggering it for a bit
+            // (the menu bar icon and Cmd+, still work, and clicking the icon
+            // cancels the snooze early). Duration is configured in Preferences.
+            SnoozeButton {
+                preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+                onDismiss()
+            }
+            .help("Snooze Cmd+Tab for a while")
 
             Spacer()
 
             KofiButton(onOpened: onDismiss)
         }
-    }
-
-    /// Rapidly switching apps can turn the popup itself into the annoyance —
-    /// Snooze suppresses Cmd+Tab triggering it for a bit (the menu bar icon
-    /// and Cmd+, still work, and clicking the icon cancels the snooze early).
-    /// Duration is configured in Preferences, not here.
-    private var snoozeControl: some View {
-        Button("Snooze") {
-            preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
-            onDismiss()
-        }
-        .buttonStyle(.plain)
-        .font(.system(size: 12))
-        .foregroundStyle(Color.accentColor)
-        .help("Snooze Cmd+Tab for a while")
     }
 
     /// Text entry (or, in favorites mode, a label) plus the favorites toggle —

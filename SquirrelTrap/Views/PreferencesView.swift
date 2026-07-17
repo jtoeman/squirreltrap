@@ -64,12 +64,17 @@ struct PreferencesView: View {
                     .frame(width: 56)
                 Text("minutes")
                     .foregroundStyle(Color.panelTextSecondary)
+                Spacer(minLength: 8)
+                SnoozeButton {
+                    preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+                    onDismiss()
+                }
             }
             .font(.system(size: 12))
             .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
 
             Divider()
-                .padding(.top, 50)
+                .padding(.top, 24)
 
             // The logo sits beside the button stack, top-aligned with the first
             // one, instead of below it — stacking it below (even inside a
