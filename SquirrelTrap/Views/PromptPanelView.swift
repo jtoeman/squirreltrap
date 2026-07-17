@@ -3,31 +3,31 @@ import SwiftUI
 struct PromptPanelView: View {
     @ObservedObject var viewModel: PromptPanelViewModel
     @ObservedObject var intentStore: IntentStore
-    @ObservedObject var preferences: AppPreferences
     @ObservedObject var reminderSyncEngine: ReminderSyncEngine
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
+    var onSnooze: () -> Void
     var onDragHandleHoverChanged: (Bool) -> Void
 
     init(
         viewModel: PromptPanelViewModel,
-        preferences: AppPreferences,
         reminderSyncEngine: ReminderSyncEngine,
         onDismiss: @escaping () -> Void,
         onEscape: @escaping () -> Void,
         onOpenPreferences: @escaping () -> Void,
+        onSnooze: @escaping () -> Void,
         onDragHandleHoverChanged: @escaping (Bool) -> Void = { _ in }
     ) {
         self.viewModel = viewModel
         self.intentStore = viewModel.intentStore
-        self.preferences = preferences
         self.reminderSyncEngine = reminderSyncEngine
         self.onDismiss = onDismiss
         self.onEscape = onEscape
         self.onOpenPreferences = onOpenPreferences
+        self.onSnooze = onSnooze
         self.onDragHandleHoverChanged = onDragHandleHoverChanged
     }
 
@@ -67,7 +67,7 @@ struct PromptPanelView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 340, alignment: .top)
+        .frame(width: 420, height: 400, alignment: .top)
         // SwiftUI's own exit-command path — needed alongside DismissiblePanel's
         // AppKit-level cancelOperation because a focused TextField sometimes
         // swallows Escape before it ever reaches the responder chain. Both
@@ -102,12 +102,11 @@ struct PromptPanelView: View {
             // Rapidly switching apps can turn the popup itself into the
             // annoyance — Snooze suppresses Cmd+Tab triggering it for a bit
             // (the menu bar icon and Cmd+, still work, and clicking the icon
-            // cancels the snooze early). Duration is configured in Preferences.
-            SnoozeButton {
-                preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
-                onDismiss()
-            }
-            .help("Snooze Cmd+Tab for a while")
+            // cancels the snooze early). Duration is configured in Preferences;
+            // the fade + "Snoozing…" message live in PanelController so both
+            // this button and the one in Preferences share the same behavior.
+            SnoozeButton(action: onSnooze)
+                .help("Snooze Cmd+Tab for a while")
 
             Spacer()
 

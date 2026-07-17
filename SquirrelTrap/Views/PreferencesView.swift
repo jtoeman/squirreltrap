@@ -14,6 +14,7 @@ struct PreferencesView: View {
     var onQuit: () -> Void
     var onConfirmationActiveChanged: (Bool) -> Void = { _ in }
     var onOpenReminderSync: () -> Void = {}
+    var onSnooze: () -> Void = {}
 
     // Escape while "Clear Finished/All Items" is up should cancel just that
     // confirmation, not the whole panel too — see the matching guard on
@@ -65,16 +66,13 @@ struct PreferencesView: View {
                 Text("minutes")
                     .foregroundStyle(Color.panelTextSecondary)
                 Spacer(minLength: 8)
-                SnoozeButton {
-                    preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
-                    onDismiss()
-                }
+                SnoozeButton(action: onSnooze)
             }
             .font(.system(size: 12))
             .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
 
             Divider()
-                .padding(.top, 24)
+                .padding(.top, 16)
 
             // The logo sits beside the button stack, top-aligned with the first
             // one, instead of below it — stacking it below (even inside a
@@ -140,7 +138,7 @@ struct PreferencesView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 340, alignment: .top)
+        .frame(width: 420, height: 400, alignment: .top)
         .onExitCommand { if !hasActiveConfirmation { onDismiss() } }
         .onAppear { permissionGranted = PermissionManager.status() == .granted }
         .onChange(of: showingClearCompletedConfirm) { _, _ in onConfirmationActiveChanged(hasActiveConfirmation) }

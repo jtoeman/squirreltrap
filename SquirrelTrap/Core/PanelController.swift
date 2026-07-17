@@ -29,7 +29,7 @@ final class PanelController: NSObject {
     // below" cue instead of clipping cleanly at a full row boundary); the window
     // itself is padded out by cardMargin on every side so the close button can
     // sit outside the card's own corner without being clipped at the window edge.
-    private let cardSize = NSSize(width: 420, height: 340)
+    private let cardSize = NSSize(width: 420, height: 400)
     private let cardMargin: CGFloat = 20
     private var windowSize: NSSize {
         NSSize(width: cardSize.width + cardMargin * 2, height: cardSize.height + cardMargin * 2)
@@ -59,6 +59,9 @@ final class PanelController: NSObject {
     private var colorTintOverlay: NSView?
     private var currentHostingView: NSView?
     private var translucencyCancellable: AnyCancellable?
+    // Shown in place of whatever SwiftUI content is up (Prompt or Preferences,
+    // wherever Snooze was clicked from) while the panel fades out slowly.
+    private var snoozeMessageLabel: NSTextField?
 
     // Reused across shows instead of recreated each time: recreating on every
     // Cmd+Tab (especially rapid repeats) raced SwiftUI's focus system against the
@@ -174,7 +177,6 @@ final class PanelController: NSObject {
             let controller = NSHostingController(
                 rootView: PromptPanelView(
                     viewModel: promptViewModel,
-                    preferences: preferences,
                     reminderSyncEngine: reminderSyncEngine,
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onEscape: { [weak self] in
@@ -182,6 +184,7 @@ final class PanelController: NSObject {
                         self?.handleCancelOperation()
                     },
                     onOpenPreferences: { [weak self] in self?.showPreferencesPanel() },
+                    onSnooze: { [weak self] in self?.snoozeAndFadeOut() },
                     onDragHandleHoverChanged: { [weak self] hovering in
                         self?.panel?.isMovableByWindowBackground = !hovering
                     }
@@ -220,7 +223,8 @@ final class PanelController: NSObject {
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onQuit: { [weak self] in self?.onQuit?() },
                     onConfirmationActiveChanged: { [weak self] active in self?.suppressEscapeDismiss = active },
-                    onOpenReminderSync: { [weak self] in self?.showReminderSyncPreferencesPanel() }
+                    onOpenReminderSync: { [weak self] in self?.showReminderSyncPreferencesPanel() },
+                    onSnooze: { [weak self] in self?.snoozeAndFadeOut() }
                 )
             )
             preferencesHostingController = controller
@@ -405,6 +409,39 @@ final class PanelController: NSObject {
         })
     }
 
+    /// Shared by the Snooze button on both the main panel and Preferences —
+    /// swaps in a "Snoozing…" message in place of whatever content is
+    /// currently showing, then fades the whole panel out slower than the
+    /// normal inactivity fade (0.3s) so it reads as a deliberate action
+    /// rather than the panel just idling away.
+    func snoozeAndFadeOut() {
+        guard let panel, panel.isVisible else { return }
+        let minutes = Int(preferences.snoozeDurationMinutes)
+        preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+
+        snoozeMessageLabel?.stringValue = "Snoozing Squirrel Trap for \(minutes) Minute\(minutes == 1 ? "" : "s")"
+        contentContainer?.isHidden = true
+        snoozeMessageLabel?.isHidden = false
+
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            hidePanel()
+            resetSnoozeMessageOverlay()
+            return
+        }
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.9
+            panel.animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            self?.hidePanel()
+            self?.resetSnoozeMessageOverlay()
+        })
+    }
+
+    private func resetSnoozeMessageOverlay() {
+        snoozeMessageLabel?.isHidden = true
+        contentContainer?.isHidden = false
+    }
+
     private func obtainPanel() -> DismissiblePanel {
         if let panel { return panel }
 
@@ -482,6 +519,23 @@ final class PanelController: NSObject {
         content.layer?.masksToBounds = true
         baseView.addSubview(content)
         contentContainer = content
+
+        // Sits above contentContainer (added after it), same frame, hidden
+        // until snoozeAndFadeOut() shows it — the blur/tint layers stay
+        // visible underneath so it still reads as the same glass card.
+        let snoozeLabel = NSTextField(labelWithString: "")
+        snoozeLabel.frame = content.frame
+        snoozeLabel.alignment = .center
+        snoozeLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        snoozeLabel.textColor = .white
+        snoozeLabel.backgroundColor = .clear
+        snoozeLabel.isBezeled = false
+        snoozeLabel.isEditable = false
+        snoozeLabel.maximumNumberOfLines = 2
+        snoozeLabel.lineBreakMode = .byWordWrapping
+        snoozeLabel.isHidden = true
+        baseView.addSubview(snoozeLabel)
+        snoozeMessageLabel = snoozeLabel
 
         let closeImage = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Close")?
             .withSymbolConfiguration(.init(pointSize: 22, weight: .regular))

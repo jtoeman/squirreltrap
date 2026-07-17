@@ -26,7 +26,7 @@ struct PermissionRequestView: View {
             }
         }
         .padding(20)
-        .frame(width: 420, height: 340, alignment: .top)
+        .frame(width: 420, height: 400, alignment: .top)
         .onExitCommand(perform: onDismiss)
     }
 }
