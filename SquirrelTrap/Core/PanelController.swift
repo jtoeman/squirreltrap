@@ -415,23 +415,36 @@ final class PanelController: NSObject {
     /// normal inactivity fade (0.3s) so it reads as a deliberate action
     /// rather than the panel just idling away.
     func snoozeAndFadeOut() {
-        guard let panel, panel.isVisible else { return }
+        guard let panel, panel.isVisible else {
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n".data(using: .utf8)!)
+            return
+        }
         let minutes = Int(preferences.snoozeDurationMinutes)
         preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
 
-        snoozeMessageLabel?.stringValue = "Snoozing Squirrel Trap for \(minutes) Minute\(minutes == 1 ? "" : "s")"
+        let message = "Snoozing Squirrel Trap for \(minutes) Minute\(minutes == 1 ? "" : "s")"
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] message=\"\(message)\" reduceMotion=\(reduceMotion)\n".data(using: .utf8)!)
+        snoozeMessageLabel?.stringValue = message
         contentContainer?.isHidden = true
         snoozeMessageLabel?.isHidden = false
 
-        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
-            hidePanel()
-            resetSnoozeMessageOverlay()
+        guard !reduceMotion else {
+            // Reduce Motion means no animated fade, not "skip the message too" —
+            // still hold it on screen for the same duration before hiding.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
+                FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] reduceMotion delay elapsed, hiding\n".data(using: .utf8)!)
+                self?.hidePanel()
+                self?.resetSnoozeMessageOverlay()
+            }
             return
         }
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] starting 0.9s fade animation\n".data(using: .utf8)!)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.9
             panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
+            FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] fade animation completed\n".data(using: .utf8)!)
             self?.hidePanel()
             self?.resetSnoozeMessageOverlay()
         })
