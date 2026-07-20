@@ -13,8 +13,15 @@ struct IntentEntry: Identifiable, Codable, Equatable {
     var reminderSyncID: String?
     /// Bumped on completion toggle, or when a Reminders-side edit is pulled
     /// in — compared against EKReminder.lastModifiedDate to resolve
-    /// bidirectional sync conflicts ("most recent change wins").
+    /// bidirectional sync conflicts ("most recent change wins"). Also reused
+    /// for iCloud sync conflict resolution against CKRecord.modificationDate.
     var lastModifiedAt: Date
+    /// Cross-device display order for iCloud sync — array position alone
+    /// isn't something CloudKit can represent, so this fractional rank
+    /// (assign a value between two neighbors when reordering) is the actual
+    /// source of truth for order once synced. IntentStore keeps the local
+    /// array sorted to match after every pull.
+    var sortRank: Double
 
     init(
         id: UUID = UUID(),
@@ -25,7 +32,8 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         favorite: Bool = false,
         reminderDate: Date? = nil,
         reminderSyncID: String? = nil,
-        lastModifiedAt: Date? = nil
+        lastModifiedAt: Date? = nil,
+        sortRank: Double = 0
     ) {
         self.id = id
         self.text = text
@@ -36,16 +44,19 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         self.reminderDate = reminderDate
         self.reminderSyncID = reminderSyncID
         self.lastModifiedAt = lastModifiedAt ?? createdAt
+        self.sortRank = sortRank
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, text, createdAt, completed, completedAt, favorite, reminderDate
-        case reminderSyncID, lastModifiedAt
+        case reminderSyncID, lastModifiedAt, sortRank
     }
 
     // Custom decoder so entries.json files saved before `favorite`/`reminderDate`
-    // (or reminderSyncID/lastModifiedAt) existed still load instead of the
-    // whole history silently disappearing.
+    // (or reminderSyncID/lastModifiedAt/sortRank) existed still load instead of
+    // the whole history silently disappearing. sortRank defaults to 0 here —
+    // IntentStore.load() normalizes it from array position right after decoding,
+    // since pre-existing files don't have a meaningful rank yet.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -57,5 +68,6 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         reminderDate = try container.decodeIfPresent(Date.self, forKey: .reminderDate)
         reminderSyncID = try container.decodeIfPresent(String.self, forKey: .reminderSyncID)
         lastModifiedAt = try container.decodeIfPresent(Date.self, forKey: .lastModifiedAt) ?? createdAt
+        sortRank = try container.decodeIfPresent(Double.self, forKey: .sortRank) ?? 0
     }
 }

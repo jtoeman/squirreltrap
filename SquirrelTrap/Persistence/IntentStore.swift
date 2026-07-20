@@ -9,6 +9,16 @@ private struct DeletionTombstone: Codable {
     let deletedAt: Date
 }
 
+/// A local deletion that hasn't been pushed to CloudKit yet — unlike the
+/// Reminders tombstone above (which guards against resurrection), this is
+/// just "still owe the cloud a delete for this id." Recorded for every local
+/// deletion unconditionally (harmless if the id was never actually synced —
+/// CloudKit just reports back an unknown-item error CloudSyncEngine ignores).
+private struct PendingCloudDeletion: Codable {
+    let id: UUID
+    let deletedAt: Date
+}
+
 @MainActor
 final class IntentStore: ObservableObject {
     @Published private(set) var entries: [IntentEntry] = []
@@ -16,9 +26,13 @@ final class IntentStore: ObservableObject {
     private let visibleLimit = 20
     private let tombstoneLimit = 20
     private let tombstoneMaxAge: TimeInterval = 7 * 24 * 60 * 60
+    private let pendingCloudDeletionLimit = 50
+    private let pendingCloudDeletionMaxAge: TimeInterval = 7 * 24 * 60 * 60
     private let fileURL: URL
     private let tombstoneFileURL: URL
+    private let pendingCloudDeletionFileURL: URL
     private var tombstones: [DeletionTombstone] = []
+    private var pendingCloudDeletions: [PendingCloudDeletion] = []
 
     init() {
         let appSupport = FileManager.default
@@ -27,6 +41,7 @@ final class IntentStore: ObservableObject {
         try? FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
         fileURL = supportDir.appendingPathComponent("entries.json")
         tombstoneFileURL = supportDir.appendingPathComponent("deletion_tombstones.json")
+        pendingCloudDeletionFileURL = supportDir.appendingPathComponent("pending_cloud_deletions.json")
 
         // One-time migration from the app's previous name (SwitchLog) so history
         // logged before the rename isn't silently orphaned. Copy, not move — leaves
@@ -40,6 +55,7 @@ final class IntentStore: ObservableObject {
 
         load()
         loadTombstones()
+        loadPendingCloudDeletions()
     }
 
     /// Last N entries. `entries` is maintained in display order directly (new
@@ -58,7 +74,8 @@ final class IntentStore: ObservableObject {
 
     @discardableResult
     func add(text: String) -> IntentEntry {
-        let entry = IntentEntry(text: text)
+        let minRank = entries.first(where: { !$0.completed })?.sortRank ?? 0
+        let entry = IntentEntry(text: text, sortRank: minRank - 1)
         entries.insert(entry, at: 0)
         save()
         return entry
@@ -67,15 +84,22 @@ final class IntentStore: ObservableObject {
     /// Moves a pending entry to sit immediately before another one — the only
     /// mutation drag-to-reorder needs. Leaves every other entry's relative
     /// order (completed items, anything outside the visible window) untouched.
+    /// sortRank is a fractional value between its new neighbors rather than
+    /// array position alone, since array position isn't something iCloud
+    /// sync can represent — see IntentEntry.sortRank.
     func movePendingEntry(id draggedID: UUID, before targetID: UUID) {
         guard draggedID != targetID,
               let draggedIndex = entries.firstIndex(where: { $0.id == draggedID }),
               !entries[draggedIndex].completed else { return }
-        let draggedEntry = entries.remove(at: draggedIndex)
+        var draggedEntry = entries.remove(at: draggedIndex)
         guard let targetIndex = entries.firstIndex(where: { $0.id == targetID }) else {
             entries.insert(draggedEntry, at: draggedIndex)
             return
         }
+        let targetRank = entries[targetIndex].sortRank
+        let priorPendingRank = entries[..<targetIndex].last(where: { !$0.completed })?.sortRank
+        draggedEntry.sortRank = priorPendingRank.map { ($0 + targetRank) / 2 } ?? targetRank - 1
+        draggedEntry.lastModifiedAt = Date()
         entries.insert(draggedEntry, at: targetIndex)
         save()
     }
@@ -86,7 +110,10 @@ final class IntentStore: ObservableObject {
     func movePendingEntryToEnd(id draggedID: UUID) {
         guard let draggedIndex = entries.firstIndex(where: { $0.id == draggedID }),
               !entries[draggedIndex].completed else { return }
-        let draggedEntry = entries.remove(at: draggedIndex)
+        var draggedEntry = entries.remove(at: draggedIndex)
+        let maxRank = entries.last(where: { !$0.completed })?.sortRank ?? 0
+        draggedEntry.sortRank = maxRank + 1
+        draggedEntry.lastModifiedAt = Date()
         if let lastPendingIndex = entries.lastIndex(where: { !$0.completed }) {
             entries.insert(draggedEntry, at: lastPendingIndex + 1)
         } else {
@@ -106,12 +133,14 @@ final class IntentStore: ObservableObject {
     func toggleFavorite(id: UUID) {
         guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
         entries[index].favorite.toggle()
+        entries[index].lastModifiedAt = Date()
         save()
     }
 
     func delete(id: UUID) {
         if let entry = entries.first(where: { $0.id == id }) {
             recordTombstoneIfSynced(entry)
+            recordPendingCloudDeletion(entry.id)
         }
         entries.removeAll { $0.id == id }
         save()
@@ -124,6 +153,7 @@ final class IntentStore: ObservableObject {
     func clearCompleted() -> [UUID] {
         let removed = entries.filter { $0.completed }
         removed.forEach(recordTombstoneIfSynced)
+        removed.forEach { recordPendingCloudDeletion($0.id) }
         entries.removeAll { $0.completed }
         save()
         return removed.map(\.id)
@@ -132,6 +162,7 @@ final class IntentStore: ObservableObject {
     @discardableResult
     func clearAll() -> [UUID] {
         entries.forEach(recordTombstoneIfSynced)
+        entries.forEach { recordPendingCloudDeletion($0.id) }
         let removedIDs = entries.map(\.id)
         entries.removeAll()
         save()
@@ -141,6 +172,7 @@ final class IntentStore: ObservableObject {
     func setReminder(id: UUID, date: Date?) {
         guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
         entries[index].reminderDate = date
+        entries[index].lastModifiedAt = Date()
         save()
     }
 
@@ -214,6 +246,63 @@ final class IntentStore: ObservableObject {
         tombstones.contains { $0.reminderSyncID == reminderSyncID }
     }
 
+    // MARK: - iCloud sync support
+
+    /// Upserts a fully-populated entry pulled from iCloud — unlike Reminders
+    /// sync's reduced scope, this carries every field, and unlike Reminders
+    /// (a foreign ID scheme requiring a separate link field), the entry's own
+    /// `id` is what CloudSyncEngine uses as the CKRecord name directly.
+    /// Doesn't reposition the array — call resortPendingBySortRank() after
+    /// applying a batch of these so drag order from another device shows up.
+    func applyCloudEntry(_ entry: IntentEntry) {
+        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            entries[index] = entry
+        } else {
+            entries.append(entry)
+        }
+        save()
+    }
+
+    /// IDs CloudSyncEngine still owes CloudKit a delete for.
+    var pendingCloudDeletionIDs: [UUID] {
+        pendingCloudDeletions.map(\.id)
+    }
+
+    /// Called after those deletes are successfully pushed.
+    func clearPendingCloudDeletions(_ ids: [UUID]) {
+        pendingCloudDeletions.removeAll { ids.contains($0.id) }
+        savePendingCloudDeletions()
+    }
+
+    private func recordPendingCloudDeletion(_ id: UUID) {
+        pendingCloudDeletions.append(PendingCloudDeletion(id: id, deletedAt: Date()))
+        prunePendingCloudDeletions()
+        savePendingCloudDeletions()
+    }
+
+    private func prunePendingCloudDeletions() {
+        let cutoff = Date().addingTimeInterval(-pendingCloudDeletionMaxAge)
+        pendingCloudDeletions.removeAll { $0.deletedAt < cutoff }
+        if pendingCloudDeletions.count > pendingCloudDeletionLimit {
+            pendingCloudDeletions.removeFirst(pendingCloudDeletions.count - pendingCloudDeletionLimit)
+        }
+    }
+
+    private func loadPendingCloudDeletions() {
+        guard let data = try? Data(contentsOf: pendingCloudDeletionFileURL) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        pendingCloudDeletions = (try? decoder.decode([PendingCloudDeletion].self, from: data)) ?? []
+        prunePendingCloudDeletions()
+    }
+
+    private func savePendingCloudDeletions() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(pendingCloudDeletions) else { return }
+        try? data.write(to: pendingCloudDeletionFileURL, options: .atomic)
+    }
+
     private func recordTombstoneIfSynced(_ entry: IntentEntry) {
         guard let reminderSyncID = entry.reminderSyncID else { return }
         tombstones.append(DeletionTombstone(reminderSyncID: reminderSyncID, deletedAt: Date()))
@@ -249,6 +338,29 @@ final class IntentStore: ObservableObject {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         entries = (try? decoder.decode([IntentEntry].self, from: data)) ?? []
+
+        // One-time migration: files saved before sortRank existed decode it as
+        // 0 for every entry (see IntentEntry's custom decoder) — detect that
+        // and derive real ranks from the array's existing (already-correct)
+        // order, exactly once. A normal load with real ranks already set
+        // never re-triggers this, so it doesn't churn lastModifiedAt on every
+        // launch once ranks are meaningful.
+        if !entries.isEmpty, entries.allSatisfy({ $0.sortRank == 0 }) {
+            for index in entries.indices {
+                entries[index].sortRank = Double(index)
+            }
+        }
+    }
+
+    /// Re-sorts pending entries by sortRank (completed entries keep their
+    /// existing relative order, which was never rank-based) — called after
+    /// applying pulled iCloud changes, since another device's reorder is only
+    /// reflected in sortRank values, not local array position.
+    func resortPendingBySortRank() {
+        let pending = entries.filter { !$0.completed }.sorted { $0.sortRank < $1.sortRank }
+        var pendingIterator = pending.makeIterator()
+        entries = entries.map { $0.completed ? $0 : (pendingIterator.next() ?? $0) }
+        save()
     }
 
     private func save() {

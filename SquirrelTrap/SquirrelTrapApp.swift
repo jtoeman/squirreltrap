@@ -31,12 +31,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let preferences = AppPreferences()
     let reminderScheduler = ReminderScheduler()
     private lazy var reminderSyncEngine = ReminderSyncEngine(intentStore: intentStore, preferences: preferences)
+    private lazy var cloudSyncEngine = CloudSyncEngine(intentStore: intentStore, preferences: preferences)
 
     private lazy var panelController = PanelController(
         intentStore: intentStore,
         preferences: preferences,
         reminderScheduler: reminderScheduler,
-        reminderSyncEngine: reminderSyncEngine
+        reminderSyncEngine: reminderSyncEngine,
+        cloudSyncEngine: cloudSyncEngine
     )
     private let monitor = AppSwitchMonitor()
     private let preferencesHotkey = PreferencesHotkeyMonitor()
@@ -91,6 +93,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         reminderScheduler.restore(from: intentStore.entries)
 
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+
+        // Harmless to register even if iCloud sync is never turned on --
+        // CloudSyncEngine itself gates all actual syncing on
+        // preferences.iCloudSyncEnabled. Registering unconditionally at
+        // launch means flipping the toggle on later doesn't need a relaunch.
+        NSApp.registerForRemoteNotifications()
+        cloudSyncEngine.refreshAccountStatus()
 
         preferences.$showMenuBarIcon
             .sink { [weak self] visible in self?.updateStatusItem(visible: visible) }
@@ -232,6 +241,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func reminderMenuItemClicked(_ sender: NSMenuItem) {
         guard let entryID = sender.representedObject as? UUID else { return }
         panelController.showPromptPanel(highlighting: entryID)
+    }
+
+    // These three are what makes iCloud sync near-instant instead of only
+    // running on the every-Nth-panel-show fallback: CloudKit's silent push
+    // wakes the (already-running) app and hands it here.
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] registered for remote notifications\n".data(using: .utf8)!)
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] registration failed: \(error)\n".data(using: .utf8)!)
+    }
+
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] received remote notification\n".data(using: .utf8)!)
+        Task { [cloudSyncEngine] in
+            await cloudSyncEngine.sync()
+        }
     }
 
     private func postReminderNotification(taskText: String?) {

@@ -30,6 +30,7 @@
 		5FA1B2C3D4E5F607080900B7 /* ReminderSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */; };
 		5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */; };
 		5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */; };
+		5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +60,7 @@
 		5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncEngine.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncPreferencesView.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnoozeButton.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +115,7 @@
 				5FA1B2C3D4E5F6070809001B /* PreferencesHotkeyMonitor.swift */,
 				5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */,
 				5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */,
+				5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -235,6 +238,7 @@
 				5FA1B2C3D4E5F607080900B7 /* ReminderSyncEngine.swift in Sources */,
 				5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */,
 				5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */,
+				5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

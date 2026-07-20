@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PreferencesView: View {
     @ObservedObject var preferences: AppPreferences
+    @ObservedObject var cloudSyncEngine: CloudSyncEngine
     let intentStore: IntentStore
     let reminderScheduler: ReminderScheduler
     @State private var launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
@@ -70,6 +71,16 @@ struct PreferencesView: View {
             }
             .font(.system(size: 12))
             .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
+
+            HStack(spacing: 6) {
+                Toggle("iCloud Sync", isOn: $preferences.iCloudSyncEnabled)
+                    .help("Keep your to-do list in sync across your Macs via iCloud — always both ways")
+                Spacer(minLength: 8)
+                Text(cloudSyncEngine.accountStatusDescription)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.panelTextSecondary)
+            }
+            .onAppear { cloudSyncEngine.refreshAccountStatus() }
 
             Divider()
                 .padding(.top, 16)

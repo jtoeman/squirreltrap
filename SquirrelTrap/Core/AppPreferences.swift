@@ -1,3 +1,4 @@
+import CloudKit
 import Foundation
 
 enum ReminderSyncDirection: String, CaseIterable {
@@ -68,6 +69,39 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurationMinutes, forKey: Keys.snoozeDurationMinutes) }
     }
 
+    /// Opt-in, off by default — single-Mac users don't need this.
+    @Published var iCloudSyncEnabled: Bool {
+        didSet { UserDefaults.standard.set(iCloudSyncEnabled, forKey: Keys.iCloudSyncEnabled) }
+    }
+
+    /// Guards one-time custom-zone + push-subscription creation so it isn't
+    /// repeated every launch.
+    @Published var hasSetUpCloudSync: Bool {
+        didSet { UserDefaults.standard.set(hasSetUpCloudSync, forKey: Keys.hasSetUpCloudSync) }
+    }
+
+    @Published var lastCloudSyncAt: Date? {
+        didSet { UserDefaults.standard.set(lastCloudSyncAt, forKey: Keys.lastCloudSyncAt) }
+    }
+
+    /// CKServerChangeToken is NSSecureCoding, not Codable, so it's
+    /// archived/unarchived through Data for UserDefaults storage. Not
+    /// @Published — pure sync-engine bookkeeping, nothing in the UI observes it.
+    var cloudChangeToken: CKServerChangeToken? {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: Keys.cloudChangeToken) else { return nil }
+            return try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: data)
+        }
+        set {
+            guard let newValue else {
+                UserDefaults.standard.removeObject(forKey: Keys.cloudChangeToken)
+                return
+            }
+            let data = try? NSKeyedArchiver.archivedData(withRootObject: newValue, requiringSecureCoding: true)
+            UserDefaults.standard.set(data, forKey: Keys.cloudChangeToken)
+        }
+    }
+
     private enum Keys {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let inactivityTimeout = "inactivityTimeout"
@@ -78,6 +112,10 @@ final class AppPreferences: ObservableObject {
         static let lastReminderSyncAt = "lastReminderSyncAt"
         static let snoozeUntil = "snoozeUntil"
         static let snoozeDurationMinutes = "snoozeDurationMinutes"
+        static let iCloudSyncEnabled = "iCloudSyncEnabled"
+        static let hasSetUpCloudSync = "hasSetUpCloudSync"
+        static let lastCloudSyncAt = "lastCloudSyncAt"
+        static let cloudChangeToken = "cloudChangeToken"
     }
 
     init() {
@@ -122,5 +160,9 @@ final class AppPreferences: ObservableObject {
         } else {
             snoozeDurationMinutes = UserDefaults.standard.double(forKey: Keys.snoozeDurationMinutes)
         }
+
+        iCloudSyncEnabled = UserDefaults.standard.bool(forKey: Keys.iCloudSyncEnabled)
+        hasSetUpCloudSync = UserDefaults.standard.bool(forKey: Keys.hasSetUpCloudSync)
+        lastCloudSyncAt = UserDefaults.standard.object(forKey: Keys.lastCloudSyncAt) as? Date
     }
 }

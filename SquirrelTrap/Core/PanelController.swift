@@ -22,6 +22,7 @@ final class PanelController: NSObject {
     private let preferences: AppPreferences
     private let reminderScheduler: ReminderScheduler
     private let reminderSyncEngine: ReminderSyncEngine
+    private let cloudSyncEngine: CloudSyncEngine
     private let promptViewModel: PromptPanelViewModel
 
     // The visible card is 420x340 (340 = 320 + one half-row, so an overflowing
@@ -112,11 +113,12 @@ final class PanelController: NSObject {
     // confirmationDialog is presented.
     private var suppressEscapeDismiss = false
 
-    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler, reminderSyncEngine: ReminderSyncEngine) {
+    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler, reminderSyncEngine: ReminderSyncEngine, cloudSyncEngine: CloudSyncEngine) {
         self.intentStore = intentStore
         self.preferences = preferences
         self.reminderScheduler = reminderScheduler
         self.reminderSyncEngine = reminderSyncEngine
+        self.cloudSyncEngine = cloudSyncEngine
         self.promptViewModel = PromptPanelViewModel(intentStore: intentStore, reminderScheduler: reminderScheduler)
         super.init()
 
@@ -217,6 +219,7 @@ final class PanelController: NSObject {
             let controller = NSHostingController(
                 rootView: PreferencesView(
                     preferences: preferences,
+                    cloudSyncEngine: cloudSyncEngine,
                     intentStore: intentStore,
                     reminderScheduler: reminderScheduler,
                     onBack: { [weak self] in self?.showPromptPanel() },
@@ -653,12 +656,24 @@ final class PanelController: NSObject {
     /// core "instant popup on Cmd+Tab" feel never waits on an EventKit round
     /// trip. Runs asynchronously; doesn't block the panel appearing.
     private func maybeTriggerReminderSync() {
-        guard preferences.reminderSyncDirection != .off else { return }
+        let reminderSyncOn = preferences.reminderSyncDirection != .off
+        // iCloud sync's primary trigger is CloudKit push notifications
+        // (near-instant) — this every-Nth-show cadence is just its fallback
+        // safety net, same as it's the *only* trigger for Reminders sync.
+        let cloudSyncOn = preferences.iCloudSyncEnabled
+        guard reminderSyncOn || cloudSyncOn else { return }
         invocationsSinceLastSync += 1
         guard invocationsSinceLastSync >= max(1, preferences.reminderSyncEveryNInvocations) else { return }
         invocationsSinceLastSync = 0
-        Task { [reminderSyncEngine] in
-            await reminderSyncEngine.sync()
+        if reminderSyncOn {
+            Task { [reminderSyncEngine] in
+                await reminderSyncEngine.sync()
+            }
+        }
+        if cloudSyncOn {
+            Task { [cloudSyncEngine] in
+                await cloudSyncEngine.sync()
+            }
         }
     }
 
