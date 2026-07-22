@@ -179,6 +179,7 @@ final class PanelController: NSObject {
             let controller = NSHostingController(
                 rootView: PromptPanelView(
                     viewModel: promptViewModel,
+                    preferences: preferences,
                     reminderSyncEngine: reminderSyncEngine,
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onEscape: { [weak self] in

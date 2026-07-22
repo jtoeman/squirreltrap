@@ -3,6 +3,7 @@ import SwiftUI
 struct PromptPanelView: View {
     @ObservedObject var viewModel: PromptPanelViewModel
     @ObservedObject var intentStore: IntentStore
+    @ObservedObject var preferences: AppPreferences
     @ObservedObject var reminderSyncEngine: ReminderSyncEngine
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
@@ -14,6 +15,7 @@ struct PromptPanelView: View {
 
     init(
         viewModel: PromptPanelViewModel,
+        preferences: AppPreferences,
         reminderSyncEngine: ReminderSyncEngine,
         onDismiss: @escaping () -> Void,
         onEscape: @escaping () -> Void,
@@ -23,6 +25,7 @@ struct PromptPanelView: View {
     ) {
         self.viewModel = viewModel
         self.intentStore = viewModel.intentStore
+        self.preferences = preferences
         self.reminderSyncEngine = reminderSyncEngine
         self.onDismiss = onDismiss
         self.onEscape = onEscape
@@ -105,7 +108,7 @@ struct PromptPanelView: View {
             // cancels the snooze early). Duration is configured in Preferences;
             // the fade + "Snoozing…" message live in PanelController so both
             // this button and the one in Preferences share the same behavior.
-            SnoozeButton(action: onSnooze)
+            SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
                 .help("Snooze Cmd+Tab for a while")
 
             Spacer()

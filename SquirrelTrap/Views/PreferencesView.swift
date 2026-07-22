@@ -67,7 +67,7 @@ struct PreferencesView: View {
                 Text("minutes")
                     .foregroundStyle(Color.panelTextSecondary)
                 Spacer(minLength: 8)
-                SnoozeButton(action: onSnooze)
+                SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
             }
             .font(.system(size: 12))
             .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
