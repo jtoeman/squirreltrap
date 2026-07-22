@@ -82,6 +82,22 @@ struct PreferencesView: View {
             }
             .onAppear { cloudSyncEngine.refreshAccountStatus() }
 
+            HStack(spacing: 6) {
+                Toggle("Default Alarm", isOn: $preferences.defaultAlarmEnabled)
+                    .help("New to-dos automatically get a reminder set")
+                if preferences.defaultAlarmEnabled {
+                    Spacer(minLength: 8)
+                    Picker("", selection: $preferences.defaultAlarmDurationSeconds) {
+                        ForEach(IntentRowView.reminderDurations, id: \.seconds) { duration in
+                            Text(duration.label).tag(duration.seconds)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                }
+            }
+            .font(.system(size: 12))
+
             Divider()
                 .padding(.top, 16)
 
@@ -149,7 +165,7 @@ struct PreferencesView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 400, alignment: .top)
+        .frame(width: 420, height: 440, alignment: .top)
         .onExitCommand { if !hasActiveConfirmation { onDismiss() } }
         .onAppear { permissionGranted = PermissionManager.status() == .granted }
         .onChange(of: showingClearCompletedConfirm) { _, _ in onConfirmationActiveChanged(hasActiveConfirmation) }

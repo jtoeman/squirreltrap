@@ -11,10 +11,12 @@ final class PromptPanelViewModel: ObservableObject {
 
     let intentStore: IntentStore
     private let reminderScheduler: ReminderScheduler
+    private let preferences: AppPreferences
 
-    init(intentStore: IntentStore, reminderScheduler: ReminderScheduler) {
+    init(intentStore: IntentStore, reminderScheduler: ReminderScheduler, preferences: AppPreferences) {
         self.intentStore = intentStore
         self.reminderScheduler = reminderScheduler
+        self.preferences = preferences
     }
 
     func setReminder(for entryID: UUID, duration: TimeInterval) {
@@ -43,7 +45,7 @@ final class PromptPanelViewModel: ObservableObject {
     func submit(dismiss: () -> Void) {
         let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            intentStore.add(text: trimmed)
+            addEntryApplyingDefaultAlarm(text: trimmed)
         }
         dismiss()
     }
@@ -51,7 +53,19 @@ final class PromptPanelViewModel: ObservableObject {
     /// Logs a fresh copy of a favorited intent, then drops back to the normal
     /// list so the user immediately sees it land at the top.
     func repeatFavorite(_ entry: IntentEntry) {
-        intentStore.add(text: entry.text)
+        addEntryApplyingDefaultAlarm(text: entry.text)
         isShowingFavorites = false
+    }
+
+    /// Shared by submit() and repeatFavorite() so "every new to-do gets a
+    /// reminder" (Preferences' Default Alarm toggle) only needs implementing
+    /// once, using the same duration presets as the per-item alarm button.
+    @discardableResult
+    private func addEntryApplyingDefaultAlarm(text: String) -> IntentEntry {
+        let entry = intentStore.add(text: text)
+        if preferences.defaultAlarmEnabled {
+            setReminder(for: entry.id, duration: preferences.defaultAlarmDurationSeconds)
+        }
+        return entry
     }
 }

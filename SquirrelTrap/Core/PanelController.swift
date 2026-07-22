@@ -30,7 +30,7 @@ final class PanelController: NSObject {
     // below" cue instead of clipping cleanly at a full row boundary); the window
     // itself is padded out by cardMargin on every side so the close button can
     // sit outside the card's own corner without being clipped at the window edge.
-    private let cardSize = NSSize(width: 420, height: 400)
+    private let cardSize = NSSize(width: 420, height: 440)
     private let cardMargin: CGFloat = 20
     private var windowSize: NSSize {
         NSSize(width: cardSize.width + cardMargin * 2, height: cardSize.height + cardMargin * 2)
@@ -119,7 +119,7 @@ final class PanelController: NSObject {
         self.reminderScheduler = reminderScheduler
         self.reminderSyncEngine = reminderSyncEngine
         self.cloudSyncEngine = cloudSyncEngine
-        self.promptViewModel = PromptPanelViewModel(intentStore: intentStore, reminderScheduler: reminderScheduler)
+        self.promptViewModel = PromptPanelViewModel(intentStore: intentStore, reminderScheduler: reminderScheduler, preferences: preferences)
         super.init()
 
         // Every Cmd+Tab ends with some other app's window becoming key — that's not

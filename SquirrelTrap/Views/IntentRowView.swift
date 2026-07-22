@@ -11,7 +11,9 @@ struct IntentRowView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingReminderPicker = false
 
-    private static let reminderDurations: [(label: String, seconds: TimeInterval)] = [
+    /// Not private — PreferencesView's "Default Alarm" picker reuses this
+    /// exact same list, so the two stay in sync automatically.
+    static let reminderDurations: [(label: String, seconds: TimeInterval)] = [
         ("1 min", 1 * 60),
         ("2 min", 2 * 60),
         ("5 min", 5 * 60),

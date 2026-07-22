@@ -69,6 +69,17 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurationMinutes, forKey: Keys.snoozeDurationMinutes) }
     }
 
+    /// When on, every new to-do gets a reminder set automatically, using
+    /// defaultAlarmDurationSeconds — same durations as the per-item alarm
+    /// button (IntentRowView.reminderDurations).
+    @Published var defaultAlarmEnabled: Bool {
+        didSet { UserDefaults.standard.set(defaultAlarmEnabled, forKey: Keys.defaultAlarmEnabled) }
+    }
+
+    @Published var defaultAlarmDurationSeconds: TimeInterval {
+        didSet { UserDefaults.standard.set(defaultAlarmDurationSeconds, forKey: Keys.defaultAlarmDurationSeconds) }
+    }
+
     /// Opt-in, off by default — single-Mac users don't need this.
     @Published var iCloudSyncEnabled: Bool {
         didSet { UserDefaults.standard.set(iCloudSyncEnabled, forKey: Keys.iCloudSyncEnabled) }
@@ -112,6 +123,8 @@ final class AppPreferences: ObservableObject {
         static let lastReminderSyncAt = "lastReminderSyncAt"
         static let snoozeUntil = "snoozeUntil"
         static let snoozeDurationMinutes = "snoozeDurationMinutes"
+        static let defaultAlarmEnabled = "defaultAlarmEnabled"
+        static let defaultAlarmDurationSeconds = "defaultAlarmDurationSeconds"
         static let iCloudSyncEnabled = "iCloudSyncEnabled"
         static let hasSetUpCloudSync = "hasSetUpCloudSync"
         static let lastCloudSyncAt = "lastCloudSyncAt"
@@ -159,6 +172,13 @@ final class AppPreferences: ObservableObject {
             snoozeDurationMinutes = 15
         } else {
             snoozeDurationMinutes = UserDefaults.standard.double(forKey: Keys.snoozeDurationMinutes)
+        }
+
+        defaultAlarmEnabled = UserDefaults.standard.bool(forKey: Keys.defaultAlarmEnabled)
+        if UserDefaults.standard.object(forKey: Keys.defaultAlarmDurationSeconds) == nil {
+            defaultAlarmDurationSeconds = 10 * 60
+        } else {
+            defaultAlarmDurationSeconds = UserDefaults.standard.double(forKey: Keys.defaultAlarmDurationSeconds)
         }
 
         iCloudSyncEnabled = UserDefaults.standard.bool(forKey: Keys.iCloudSyncEnabled)
