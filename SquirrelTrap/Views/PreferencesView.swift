@@ -75,7 +75,25 @@ struct PreferencesView: View {
             HStack(spacing: 6) {
                 Toggle("iCloud Sync", isOn: $preferences.iCloudSyncEnabled)
                     .help("Keep your to-do list in sync across your Macs via iCloud — always both ways")
+                    .onChange(of: preferences.iCloudSyncEnabled) { oldValue, newValue in
+                        // Same reasoning as Reminders sync: flip the toggle on and
+                        // wait for the every-Nth-show fallback (or a push that
+                        // hasn't arrived yet) reads as "nothing happened" — sync
+                        // right away instead, same as turning on Reminders sync
+                        // immediately forces a list load.
+                        guard !oldValue, newValue else { return }
+                        Task { await cloudSyncEngine.sync() }
+                    }
                 Spacer(minLength: 8)
+                if cloudSyncEngine.isSyncing {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if preferences.iCloudSyncEnabled {
+                    Button("Sync Now") {
+                        Task { await cloudSyncEngine.sync() }
+                    }
+                    .controlSize(.small)
+                }
                 Text(cloudSyncEngine.accountStatusDescription)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.panelTextSecondary)
