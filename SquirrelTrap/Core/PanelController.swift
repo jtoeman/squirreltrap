@@ -11,7 +11,7 @@ final class DismissiblePanel: NSPanel {
     override var canBecomeKey: Bool { true }
 
     override func cancelOperation(_ sender: Any?) {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [cancelOperation] AppKit cancelOperation fired\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [cancelOperation] AppKit cancelOperation fired\n")
         onCancel?()
     }
 }
@@ -138,7 +138,7 @@ final class PanelController: NSObject {
             queue: .main
         ) { [weak self] notification in
             let app = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName ?? "?"
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [didActivateApplication] \(app)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [didActivateApplication] \(app)\n")
             guard let self, !self.hasReclaimedFocusForCurrentShow else { return }
             self.hasReclaimedFocusForCurrentShow = true
             self.reclaimKeyFocusIfVisible()
@@ -183,7 +183,7 @@ final class PanelController: NSObject {
                     reminderSyncEngine: reminderSyncEngine,
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onEscape: { [weak self] in
-                        FileHandle.standardError.write("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n".data(using: .utf8)!)
+                        debugLog("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n")
                         self?.handleCancelOperation()
                     },
                     onOpenPreferences: { [weak self] in self?.showPreferencesPanel() },
@@ -257,7 +257,7 @@ final class PanelController: NSObject {
 
     func hidePanel() {
         let stack = Thread.callStackSymbols.prefix(6).joined(separator: "\n  ")
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [hidePanel] called, panel.isVisible=\(panel?.isVisible ?? false)\n  \(stack)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [hidePanel] called, panel.isVisible=\(panel?.isVisible ?? false)\n  \(stack)\n")
         suppressEscapeDismiss = false
         panel?.orderOut(nil)
         panel?.alphaValue = 1
@@ -269,12 +269,12 @@ final class PanelController: NSObject {
 
     private func reclaimKeyFocusIfVisible() {
         guard let panel, panel.isVisible else {
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n")
             return
         }
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] reclaiming key focus\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] reclaiming key focus\n")
         panel.makeKeyAndOrderFront(nil)
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n")
     }
 
     /// Clicking into whatever app you switched to should dismiss the panel — but that
@@ -340,7 +340,7 @@ final class PanelController: NSObject {
     /// since the system consumes the Tab keydown before it ever reaches us.
     private func handlePotentialDismissKey(_ event: NSEvent) {
         guard !suppressEscapeDismiss, let panel, panel.isVisible else {
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] ignored (suppressEscapeDismiss=\(suppressEscapeDismiss), panelVisible=\(panel?.isVisible ?? false))\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [dismissKey] ignored (suppressEscapeDismiss=\(suppressEscapeDismiss), panelVisible=\(panel?.isVisible ?? false))\n")
             return
         }
         let watched: NSEvent.ModifierFlags = [.command, .option, .function]
@@ -349,14 +349,14 @@ final class PanelController: NSObject {
         case .keyDown:
             modifiersHeldAtRisk = []
             if event.keyCode == 53 {
-                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] keyDown Escape -> handleCancelOperation\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: [dismissKey] keyDown Escape -> handleCancelOperation\n")
                 handleCancelOperation()
                 return
             }
             let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] keyDown keyCode=\(event.keyCode) flags=\(flags.rawValue)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [dismissKey] keyDown keyCode=\(event.keyCode) flags=\(flags.rawValue)\n")
             if flags.contains(.command) || flags.contains(.control) {
-                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] Cmd/Control combo -> handleCancelOperation\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: [dismissKey] Cmd/Control combo -> handleCancelOperation\n")
                 handleCancelOperation()
             }
 
@@ -364,10 +364,10 @@ final class PanelController: NSObject {
             let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             let currentlyHeld = flags.intersection(watched)
             let wasHeld = modifiersHeldAtRisk
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] flagsChanged currentlyHeld=\(currentlyHeld.rawValue) wasHeld=\(wasHeld.rawValue)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [dismissKey] flagsChanged currentlyHeld=\(currentlyHeld.rawValue) wasHeld=\(wasHeld.rawValue)\n")
             if currentlyHeld.isEmpty, !wasHeld.isEmpty {
                 let wasRealSwitch = wasHeld.contains(.command) && (isSwitchGestureActive?() ?? false)
-                FileHandle.standardError.write("Squirrel Trap DEBUG: [dismissKey] bare modifier released, wasRealSwitch=\(wasRealSwitch)\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: [dismissKey] bare modifier released, wasRealSwitch=\(wasRealSwitch)\n")
                 if !wasRealSwitch {
                     handleCancelOperation()
                 }
@@ -420,7 +420,7 @@ final class PanelController: NSObject {
     /// rather than the panel just idling away.
     func snoozeAndFadeOut() {
         guard let panel, panel.isVisible else {
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] skipped, panel.isVisible=\(panel?.isVisible ?? false)\n")
             return
         }
         let minutes = Int(preferences.snoozeDurationMinutes)
@@ -428,7 +428,7 @@ final class PanelController: NSObject {
 
         let message = "Snoozing Squirrel Trap for \(minutes) Minute\(minutes == 1 ? "" : "s")"
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] message=\"\(message)\" reduceMotion=\(reduceMotion)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] message=\"\(message)\" reduceMotion=\(reduceMotion)\n")
         snoozeMessageLabel?.stringValue = message
         contentContainer?.isHidden = true
         snoozeMessageLabel?.isHidden = false
@@ -437,18 +437,18 @@ final class PanelController: NSObject {
             // Reduce Motion means no animated fade, not "skip the message too" —
             // still hold it on screen for the same duration before hiding.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
-                FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] reduceMotion delay elapsed, hiding\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] reduceMotion delay elapsed, hiding\n")
                 self?.hidePanel()
                 self?.resetSnoozeMessageOverlay()
             }
             return
         }
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] starting 0.9s fade animation\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] starting 0.9s fade animation\n")
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.9
             panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [snoozeAndFadeOut] fade animation completed\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] fade animation completed\n")
             self?.hidePanel()
             self?.resetSnoozeMessageOverlay()
         })
@@ -588,12 +588,12 @@ final class PanelController: NSObject {
         NotificationCenter.default.addObserver(
             forName: NSWindow.didResignKeyNotification, object: newPanel, queue: .main
         ) { _ in
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [panel] didResignKey, NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [panel] didResignKey, NSApp.isActive=\(NSApp.isActive)\n")
         }
         NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification, object: newPanel, queue: .main
         ) { _ in
-            FileHandle.standardError.write("Squirrel Trap DEBUG: [panel] didBecomeKey, NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: [panel] didBecomeKey, NSApp.isActive=\(NSApp.isActive)\n")
         }
 
         // Fires immediately with the current value on subscribe, so the
@@ -608,12 +608,12 @@ final class PanelController: NSObject {
     }
 
     @objc private func closeButtonClicked() {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [closeButtonClicked] X button clicked\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [closeButtonClicked] X button clicked\n")
         hidePanel()
     }
 
     private func handleCancelOperation() {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [handleCancelOperation] suppressEscapeDismiss=\(suppressEscapeDismiss)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [handleCancelOperation] suppressEscapeDismiss=\(suppressEscapeDismiss)\n")
         guard !suppressEscapeDismiss else { return }
         hidePanel()
     }
@@ -634,7 +634,7 @@ final class PanelController: NSObject {
 
     private func present() {
         let stack = Thread.callStackSymbols.prefix(6).joined(separator: "\n  ")
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [present] called\n  \(stack)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [present] called\n  \(stack)\n")
         guard let panel else { return }
         // Only reposition when the panel is opening fresh (Cmd+Tab, menu bar,
         // Cmd+,). Navigating between content within an already-visible panel
@@ -645,7 +645,7 @@ final class PanelController: NSObject {
             maybeTriggerReminderSync()
         }
         panel.makeKeyAndOrderFront(nil)
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n")
         installGlobalClickMonitor()
         startActivityMonitoring()
         installDismissKeyMonitor()

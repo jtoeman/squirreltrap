@@ -31,6 +31,7 @@
 		5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */; };
 		5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */; };
 		5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */; };
+		5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090031 /* DebugLog.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,8 @@
 		5FA1B2C3D4E5F6070809000B /* SquirrelTrapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquirrelTrapApp.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000D /* SquirrelTrap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SquirrelTrap.entitlements; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SquirrelTrap-Release.entitlements"; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090031 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000F /* AppSwitchMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSwitchMonitor.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090010 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
@@ -100,6 +103,7 @@
 				5FA1B2C3D4E5F6070809000E /* Assets.xcassets */,
 				5FA1B2C3D4E5F6070809000C /* Info.plist */,
 				5FA1B2C3D4E5F6070809000D /* SquirrelTrap.entitlements */,
+				5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */,
 			);
 			path = SquirrelTrap;
 			sourceTree = "<group>";
@@ -116,6 +120,7 @@
 				5FA1B2C3D4E5F60708090020 /* ReminderScheduler.swift */,
 				5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */,
 				5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */,
+				5FA1B2C3D4E5F60708090031 /* DebugLog.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -239,6 +244,7 @@
 				5FA1B2C3D4E5F607080900B8 /* ReminderSyncPreferencesView.swift in Sources */,
 				5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */,
 				5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */,
+				5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,7 +400,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = SquirrelTrap/SquirrelTrap.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "SquirrelTrap/SquirrelTrap-Release.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

@@ -70,7 +70,7 @@ final class AppSwitchMonitor {
 
     fileprivate func handleTapEvent(type: CGEventType, event: CGEvent) {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            FileHandle.standardError.write("Squirrel Trap DEBUG: tap disabled (\(type)), re-enabling\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: tap disabled (\(type)), re-enabling\n")
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
@@ -85,7 +85,7 @@ final class AppSwitchMonitor {
             guard commandHeld, keyCode == tabKeyCode, !isGestureActive else { return }
             isGestureActive = true
             switchDetectedDuringCurrentHold = true
-            FileHandle.standardError.write("Squirrel Trap DEBUG: gesture detected, firing callback\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: gesture detected, firing callback\n")
             let callback = onSwitchGestureDetected
             DispatchQueue.main.async {
                 callback?()

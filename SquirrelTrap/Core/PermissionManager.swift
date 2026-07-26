@@ -27,9 +27,7 @@ enum PermissionManager {
     static func requestAccess() {
         NSApp.activate(ignoringOtherApps: true)
         let result = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-        FileHandle.standardError.write(
-            "Squirrel Trap DEBUG: IOHIDRequestAccess returned \(result), status now \(status())\n".data(using: .utf8)!
-        )
+        debugLog("Squirrel Trap DEBUG: IOHIDRequestAccess returned \(result), status now \(status())\n")
     }
 
     static func openInputMonitoringSettings() {

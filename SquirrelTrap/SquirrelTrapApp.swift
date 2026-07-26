@@ -106,11 +106,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         let status = PermissionManager.status()
-        FileHandle.standardError.write("Squirrel Trap DEBUG: launch status = \(status)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: launch status = \(status)\n")
 
         if status == .granted {
             let started = monitor.start()
-            FileHandle.standardError.write("Squirrel Trap DEBUG: monitor.start() = \(started)\n".data(using: .utf8)!)
+            debugLog("Squirrel Trap DEBUG: monitor.start() = \(started)\n")
         } else {
             panelController.showPermissionRequestPanel()
             startPermissionPolling()
@@ -123,12 +123,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 guard let self else { return }
                 let status = PermissionManager.status()
-                FileHandle.standardError.write("Squirrel Trap DEBUG: poll status = \(status)\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: poll status = \(status)\n")
                 guard status == .granted else { return }
                 self.permissionPollTimer?.invalidate()
                 self.permissionPollTimer = nil
                 let started = self.monitor.start()
-                FileHandle.standardError.write("Squirrel Trap DEBUG: monitor.start() = \(started)\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: monitor.start() = \(started)\n")
                 self.panelController.hidePanel()
             }
         }
@@ -247,15 +247,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // running on the every-Nth-panel-show fallback: CloudKit's silent push
     // wakes the (already-running) app and hands it here.
     func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] registered for remote notifications\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [push] registered for remote notifications\n")
     }
 
     func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] registration failed: \(error)\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [push] registration failed: \(error)\n")
     }
 
     func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [push] received remote notification\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [push] received remote notification\n")
         Task { [cloudSyncEngine] in
             await cloudSyncEngine.sync()
         }

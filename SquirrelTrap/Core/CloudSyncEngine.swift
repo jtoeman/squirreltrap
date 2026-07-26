@@ -56,7 +56,7 @@ final class CloudSyncEngine: ObservableObject {
         let zoneOK = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             zoneOp.modifyRecordZonesResultBlock = { result in
                 if case .failure(let error) = result {
-                    FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] zone creation failed: \(error)\n".data(using: .utf8)!)
+                    debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] zone creation failed: \(error)\n")
                 }
                 continuation.resume(returning: (try? result.get()) != nil)
             }
@@ -72,7 +72,7 @@ final class CloudSyncEngine: ObservableObject {
         let subOK = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             subOp.modifySubscriptionsResultBlock = { result in
                 if case .failure(let error) = result {
-                    FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] subscription creation failed: \(error)\n".data(using: .utf8)!)
+                    debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] subscription creation failed: \(error)\n")
                 }
                 continuation.resume(returning: (try? result.get()) != nil)
             }
@@ -81,7 +81,7 @@ final class CloudSyncEngine: ObservableObject {
         guard subOK else { return }
 
         preferences.hasSetUpCloudSync = true
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] zone + subscription created\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] zone + subscription created\n")
     }
 
     func sync() async {
@@ -121,14 +121,14 @@ final class CloudSyncEngine: ObservableObject {
             case .success(let success):
                 newToken = success.serverChangeToken
             case .failure(let error):
-                FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] zone fetch failed: \(error)\n".data(using: .utf8)!)
+                debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] zone fetch failed: \(error)\n")
             }
         }
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             operation.fetchRecordZoneChangesResultBlock = { result in
                 if case .failure(let error) = result {
-                    FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] pull failed: \(error)\n".data(using: .utf8)!)
+                    debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pull failed: \(error)\n")
                 }
                 continuation.resume()
             }
@@ -151,7 +151,7 @@ final class CloudSyncEngine: ObservableObject {
         if !changedRecords.isEmpty || !deletedIDs.isEmpty {
             intentStore.resortPendingBySortRank()
         }
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] pulled \(changedRecords.count) changed, \(deletedIDs.count) deleted\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pulled \(changedRecords.count) changed, \(deletedIDs.count) deleted\n")
     }
 
     /// Most-recent-wins, same rule as Reminders sync: if the local entry also
@@ -203,7 +203,7 @@ final class CloudSyncEngine: ObservableObject {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             operation.modifyRecordsResultBlock = { result in
                 if case .failure(let error) = result {
-                    FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] push failed: \(error)\n".data(using: .utf8)!)
+                    debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] push failed: \(error)\n")
                 }
                 continuation.resume()
             }
@@ -213,7 +213,7 @@ final class CloudSyncEngine: ObservableObject {
         if !toDelete.isEmpty {
             intentStore.clearPendingCloudDeletions(deletionIDs)
         }
-        FileHandle.standardError.write("Squirrel Trap DEBUG: [CloudSyncEngine] pushed \(toSave.count) saved, \(toDelete.count) deleted\n".data(using: .utf8)!)
+        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pushed \(toSave.count) saved, \(toDelete.count) deleted\n")
     }
 
     private func makeRecord(for entry: IntentEntry) -> CKRecord {
