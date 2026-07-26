@@ -84,7 +84,6 @@ struct PreferencesView: View {
                         guard !oldValue, newValue else { return }
                         Task { await cloudSyncEngine.sync() }
                     }
-                Spacer(minLength: 8)
                 if cloudSyncEngine.isSyncing {
                     ProgressView()
                         .controlSize(.small)
@@ -94,6 +93,7 @@ struct PreferencesView: View {
                     }
                     .controlSize(.small)
                 }
+                Spacer(minLength: 8)
                 Text(cloudSyncEngine.accountStatusDescription)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.panelTextSecondary)
@@ -104,7 +104,6 @@ struct PreferencesView: View {
                 Toggle("Default Alarm", isOn: $preferences.defaultAlarmEnabled)
                     .help("New to-dos automatically get a reminder set")
                 if preferences.defaultAlarmEnabled {
-                    Spacer(minLength: 8)
                     Picker("", selection: $preferences.defaultAlarmDurationSeconds) {
                         ForEach(IntentRowView.reminderDurations, id: \.seconds) { duration in
                             Text(duration.label).tag(duration.seconds)
@@ -112,7 +111,9 @@ struct PreferencesView: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
+                    .fixedSize()
                 }
+                Spacer(minLength: 0)
             }
             .font(.system(size: 12))
 
