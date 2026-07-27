@@ -23,6 +23,7 @@ final class PanelController: NSObject {
     private let reminderScheduler: ReminderScheduler
     private let reminderSyncEngine: ReminderSyncEngine
     private let cloudSyncEngine: CloudSyncEngine
+    private let updateChecker: UpdateChecker
     private let promptViewModel: PromptPanelViewModel
 
     // The visible card is 420x340 (340 = 320 + one half-row, so an overflowing
@@ -113,12 +114,13 @@ final class PanelController: NSObject {
     // confirmationDialog is presented.
     private var suppressEscapeDismiss = false
 
-    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler, reminderSyncEngine: ReminderSyncEngine, cloudSyncEngine: CloudSyncEngine) {
+    init(intentStore: IntentStore, preferences: AppPreferences, reminderScheduler: ReminderScheduler, reminderSyncEngine: ReminderSyncEngine, cloudSyncEngine: CloudSyncEngine, updateChecker: UpdateChecker) {
         self.intentStore = intentStore
         self.preferences = preferences
         self.reminderScheduler = reminderScheduler
         self.reminderSyncEngine = reminderSyncEngine
         self.cloudSyncEngine = cloudSyncEngine
+        self.updateChecker = updateChecker
         self.promptViewModel = PromptPanelViewModel(intentStore: intentStore, reminderScheduler: reminderScheduler, preferences: preferences)
         super.init()
 
@@ -181,6 +183,7 @@ final class PanelController: NSObject {
                     viewModel: promptViewModel,
                     preferences: preferences,
                     reminderSyncEngine: reminderSyncEngine,
+                    updateChecker: updateChecker,
                     onDismiss: { [weak self] in self?.hidePanel() },
                     onEscape: { [weak self] in
                         debugLog("Squirrel Trap DEBUG: [onExitCommand] SwiftUI onExitCommand fired\n")
@@ -643,6 +646,9 @@ final class PanelController: NSObject {
             positionOnActiveScreen(panel)
             hasReclaimedFocusForCurrentShow = false
             maybeTriggerReminderSync()
+            Task { [updateChecker] in
+                await updateChecker.checkIfDue()
+            }
         }
         panel.makeKeyAndOrderFront(nil)
         debugLog("Squirrel Trap DEBUG: [present] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n")

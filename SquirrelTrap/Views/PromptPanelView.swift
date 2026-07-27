@@ -5,6 +5,7 @@ struct PromptPanelView: View {
     @ObservedObject var intentStore: IntentStore
     @ObservedObject var preferences: AppPreferences
     @ObservedObject var reminderSyncEngine: ReminderSyncEngine
+    @ObservedObject var updateChecker: UpdateChecker
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
     var onDismiss: () -> Void
@@ -17,6 +18,7 @@ struct PromptPanelView: View {
         viewModel: PromptPanelViewModel,
         preferences: AppPreferences,
         reminderSyncEngine: ReminderSyncEngine,
+        updateChecker: UpdateChecker,
         onDismiss: @escaping () -> Void,
         onEscape: @escaping () -> Void,
         onOpenPreferences: @escaping () -> Void,
@@ -27,6 +29,7 @@ struct PromptPanelView: View {
         self.intentStore = viewModel.intentStore
         self.preferences = preferences
         self.reminderSyncEngine = reminderSyncEngine
+        self.updateChecker = updateChecker
         self.onDismiss = onDismiss
         self.onEscape = onEscape
         self.onOpenPreferences = onOpenPreferences
@@ -46,6 +49,17 @@ struct PromptPanelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+
+            if let update = updateChecker.availableUpdate {
+                Link(destination: update.url) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.down.circle.fill")
+                        Text("Update available: v\(update.version)")
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(Color.accentColor)
+            }
 
             if reminderSyncEngine.isSyncing {
                 HStack(spacing: 6) {

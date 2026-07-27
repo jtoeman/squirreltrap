@@ -32,13 +32,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let reminderScheduler = ReminderScheduler()
     private lazy var reminderSyncEngine = ReminderSyncEngine(intentStore: intentStore, preferences: preferences)
     private lazy var cloudSyncEngine = CloudSyncEngine(intentStore: intentStore, preferences: preferences)
+    private lazy var updateChecker = UpdateChecker(preferences: preferences)
 
     private lazy var panelController = PanelController(
         intentStore: intentStore,
         preferences: preferences,
         reminderScheduler: reminderScheduler,
         reminderSyncEngine: reminderSyncEngine,
-        cloudSyncEngine: cloudSyncEngine
+        cloudSyncEngine: cloudSyncEngine,
+        updateChecker: updateChecker
     )
     private let monitor = AppSwitchMonitor()
     private let preferencesHotkey = PreferencesHotkeyMonitor()
@@ -100,6 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // launch means flipping the toggle on later doesn't need a relaunch.
         NSApp.registerForRemoteNotifications()
         cloudSyncEngine.refreshAccountStatus()
+
+        Task { [updateChecker] in
+            await updateChecker.checkIfDue()
+        }
 
         preferences.$showMenuBarIcon
             .sink { [weak self] visible in self?.updateStatusItem(visible: visible) }

@@ -32,6 +32,7 @@
 		5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */; };
 		5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */; };
 		5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090031 /* DebugLog.swift */; };
+		5FA1B2C3D4E5F607080900BC /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090032 /* UpdateChecker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		5FA1B2C3D4E5F6070809000D /* SquirrelTrap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SquirrelTrap.entitlements; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SquirrelTrap-Release.entitlements"; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090031 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090032 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F6070809000F /* AppSwitchMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSwitchMonitor.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090010 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */,
 				5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */,
 				5FA1B2C3D4E5F60708090031 /* DebugLog.swift */,
+				5FA1B2C3D4E5F60708090032 /* UpdateChecker.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -245,6 +248,7 @@
 				5FA1B2C3D4E5F607080900B9 /* SnoozeButton.swift in Sources */,
 				5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */,
 				5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */,
+				5FA1B2C3D4E5F607080900BC /* UpdateChecker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

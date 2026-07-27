@@ -95,6 +95,13 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(lastCloudSyncAt, forKey: Keys.lastCloudSyncAt) }
     }
 
+    /// Throttles UpdateChecker to at most once a day — it's cheap to call on
+    /// every launch and panel show, but there's no reason to actually hit
+    /// GitHub's API that often.
+    @Published var lastUpdateCheckAt: Date? {
+        didSet { UserDefaults.standard.set(lastUpdateCheckAt, forKey: Keys.lastUpdateCheckAt) }
+    }
+
     /// CKServerChangeToken is NSSecureCoding, not Codable, so it's
     /// archived/unarchived through Data for UserDefaults storage. Not
     /// @Published — pure sync-engine bookkeeping, nothing in the UI observes it.
@@ -129,6 +136,7 @@ final class AppPreferences: ObservableObject {
         static let hasSetUpCloudSync = "hasSetUpCloudSync"
         static let lastCloudSyncAt = "lastCloudSyncAt"
         static let cloudChangeToken = "cloudChangeToken"
+        static let lastUpdateCheckAt = "lastUpdateCheckAt"
     }
 
     init() {
@@ -184,5 +192,6 @@ final class AppPreferences: ObservableObject {
         iCloudSyncEnabled = UserDefaults.standard.bool(forKey: Keys.iCloudSyncEnabled)
         hasSetUpCloudSync = UserDefaults.standard.bool(forKey: Keys.hasSetUpCloudSync)
         lastCloudSyncAt = UserDefaults.standard.object(forKey: Keys.lastCloudSyncAt) as? Date
+        lastUpdateCheckAt = UserDefaults.standard.object(forKey: Keys.lastUpdateCheckAt) as? Date
     }
 }
