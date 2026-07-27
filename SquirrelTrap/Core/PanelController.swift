@@ -224,6 +224,7 @@ final class PanelController: NSObject {
                 rootView: PreferencesView(
                     preferences: preferences,
                     cloudSyncEngine: cloudSyncEngine,
+                    updateChecker: updateChecker,
                     intentStore: intentStore,
                     reminderScheduler: reminderScheduler,
                     onBack: { [weak self] in self?.showPromptPanel() },

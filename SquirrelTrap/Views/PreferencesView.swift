@@ -4,6 +4,7 @@ import SwiftUI
 struct PreferencesView: View {
     @ObservedObject var preferences: AppPreferences
     @ObservedObject var cloudSyncEngine: CloudSyncEngine
+    @ObservedObject var updateChecker: UpdateChecker
     let intentStore: IntentStore
     let reminderScheduler: ReminderScheduler
     @State private var launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
@@ -183,6 +184,18 @@ struct PreferencesView: View {
                     Text("v\(appVersionString)")
                         .font(.system(size: 10))
                         .foregroundStyle(Color.panelTextSecondary)
+                    if updateChecker.isChecking {
+                        ProgressView()
+                            .controlSize(.mini)
+                    } else if let update = updateChecker.availableUpdate {
+                        Link("Update to v\(update.version)", destination: update.url)
+                            .font(.system(size: 10))
+                    } else {
+                        Button("Check for Updates") {
+                            Task { await updateChecker.check() }
+                        }
+                        .controlSize(.mini)
+                    }
                 }
             }
 

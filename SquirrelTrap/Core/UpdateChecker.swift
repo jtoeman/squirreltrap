@@ -13,6 +13,7 @@ final class UpdateChecker: ObservableObject {
     }
 
     @Published private(set) var availableUpdate: AvailableUpdate?
+    @Published private(set) var isChecking = false
 
     private let preferences: AppPreferences
     private let repo = "jtoeman/squirreltrap"
@@ -32,6 +33,8 @@ final class UpdateChecker: ObservableObject {
     }
 
     func check() async {
+        isChecking = true
+        defer { isChecking = false }
         preferences.lastUpdateCheckAt = Date()
         guard let url = URL(string: "https://api.github.com/repos/\(repo)/releases/latest") else { return }
         do {
