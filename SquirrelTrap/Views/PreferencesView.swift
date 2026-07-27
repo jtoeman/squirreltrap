@@ -24,6 +24,10 @@ struct PreferencesView: View {
         showingClearCompletedConfirm || showingClearAllConfirm
     }
 
+    private var appVersionString: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             header
@@ -172,9 +176,14 @@ struct PreferencesView: View {
 
                 Spacer()
 
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 100, height: 100)
+                VStack(spacing: 4) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .frame(width: 100, height: 100)
+                    Text("v\(appVersionString)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.panelTextSecondary)
+                }
             }
 
             Spacer(minLength: 0)
