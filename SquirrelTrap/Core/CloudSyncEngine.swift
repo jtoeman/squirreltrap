@@ -46,10 +46,11 @@ final class CloudSyncEngine: ObservableObject {
     }
 
     /// Creates the custom zone (needed for reliable change-token delta sync —
-    /// the default zone doesn't support it the same way) and the push
-    /// subscription once, guarded by a persisted flag.
-    private func ensureZoneAndSubscriptionExist() async {
-        guard !preferences.hasSetUpCloudSync else { return }
+    /// the default zone doesn't support it the same way), guarded by a
+    /// persisted flag. Actual pull/push depends only on this succeeding.
+    @discardableResult
+    private func ensureZoneExists() async -> Bool {
+        guard !preferences.hasSetUpCloudSync else { return true }
 
         let zone = CKRecordZone(zoneID: zoneID)
         let zoneOp = CKModifyRecordZonesOperation(recordZonesToSave: [zone], recordZoneIDsToDelete: nil)
@@ -62,7 +63,20 @@ final class CloudSyncEngine: ObservableObject {
             }
             database.add(zoneOp)
         }
-        guard zoneOK else { return }
+        if zoneOK {
+            preferences.hasSetUpCloudSync = true
+            debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] zone created\n")
+        }
+        return zoneOK
+    }
+
+    /// Creates the push subscription, guarded by its own persisted flag,
+    /// entirely separate from the zone flag above. This only enables
+    /// near-instant push-triggered sync -- a failure here must never block
+    /// actual data sync (pull/push only need the zone), so this is best
+    /// effort and retried on the next sync() call if it fails.
+    private func ensureSubscriptionExists() async {
+        guard !preferences.hasCreatedCloudSubscription else { return }
 
         let subscription = CKDatabaseSubscription(subscriptionID: subscriptionID)
         let info = CKSubscription.NotificationInfo()
@@ -78,10 +92,10 @@ final class CloudSyncEngine: ObservableObject {
             }
             database.add(subOp)
         }
-        guard subOK else { return }
-
-        preferences.hasSetUpCloudSync = true
-        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] zone + subscription created\n")
+        if subOK {
+            preferences.hasCreatedCloudSubscription = true
+            debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] subscription created\n")
+        }
     }
 
     func sync() async {
@@ -89,8 +103,8 @@ final class CloudSyncEngine: ObservableObject {
         isSyncing = true
         defer { isSyncing = false }
 
-        await ensureZoneAndSubscriptionExist()
-        guard preferences.hasSetUpCloudSync else { return }
+        guard await ensureZoneExists() else { return }
+        await ensureSubscriptionExists()
         await pull()
         await push()
         preferences.lastCloudSyncAt = Date()

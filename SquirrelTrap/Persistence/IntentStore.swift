@@ -252,13 +252,17 @@ final class IntentStore: ObservableObject {
     /// sync's reduced scope, this carries every field, and unlike Reminders
     /// (a foreign ID scheme requiring a separate link field), the entry's own
     /// `id` is what CloudSyncEngine uses as the CKRecord name directly.
-    /// Doesn't reposition the array — call resortPendingBySortRank() after
-    /// applying a batch of these so drag order from another device shows up.
+    /// A genuinely new entry is inserted at the front, same as add() does for
+    /// local entries — visibleEntries only shows the front `visibleLimit`
+    /// entries, so appending at the back left anything pulled from another
+    /// device permanently invisible once the list grew past that window.
+    /// Call resortPendingBySortRank() after applying a batch of these so drag
+    /// order from another device shows up correctly.
     func applyCloudEntry(_ entry: IntentEntry) {
         if let index = entries.firstIndex(where: { $0.id == entry.id }) {
             entries[index] = entry
         } else {
-            entries.append(entry)
+            entries.insert(entry, at: 0)
         }
         save()
     }

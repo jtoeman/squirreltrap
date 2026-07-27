@@ -85,10 +85,21 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(iCloudSyncEnabled, forKey: Keys.iCloudSyncEnabled) }
     }
 
-    /// Guards one-time custom-zone + push-subscription creation so it isn't
-    /// repeated every launch.
+    /// Guards one-time custom-zone creation so it isn't repeated every sync.
+    /// Actual pull/push only requires the zone -- see hasCreatedCloudSubscription
+    /// for the separate (best-effort, non-blocking) push-subscription flag.
     @Published var hasSetUpCloudSync: Bool {
         didSet { UserDefaults.standard.set(hasSetUpCloudSync, forKey: Keys.hasSetUpCloudSync) }
+    }
+
+    /// Guards one-time push-subscription creation, tracked separately from
+    /// the zone flag above: the subscription only enables near-instant push
+    /// triggering, so a failure here must never block actual data sync (which
+    /// only needs the zone) -- previously both were gated behind a single
+    /// flag, so a subscription failure silently turned every future sync()
+    /// call into a permanent no-op.
+    @Published var hasCreatedCloudSubscription: Bool {
+        didSet { UserDefaults.standard.set(hasCreatedCloudSubscription, forKey: Keys.hasCreatedCloudSubscription) }
     }
 
     @Published var lastCloudSyncAt: Date? {
@@ -134,6 +145,7 @@ final class AppPreferences: ObservableObject {
         static let defaultAlarmDurationSeconds = "defaultAlarmDurationSeconds"
         static let iCloudSyncEnabled = "iCloudSyncEnabled"
         static let hasSetUpCloudSync = "hasSetUpCloudSync"
+        static let hasCreatedCloudSubscription = "hasCreatedCloudSubscription"
         static let lastCloudSyncAt = "lastCloudSyncAt"
         static let cloudChangeToken = "cloudChangeToken"
         static let lastUpdateCheckAt = "lastUpdateCheckAt"
@@ -191,6 +203,7 @@ final class AppPreferences: ObservableObject {
 
         iCloudSyncEnabled = UserDefaults.standard.bool(forKey: Keys.iCloudSyncEnabled)
         hasSetUpCloudSync = UserDefaults.standard.bool(forKey: Keys.hasSetUpCloudSync)
+        hasCreatedCloudSubscription = UserDefaults.standard.bool(forKey: Keys.hasCreatedCloudSubscription)
         lastCloudSyncAt = UserDefaults.standard.object(forKey: Keys.lastCloudSyncAt) as? Date
         lastUpdateCheckAt = UserDefaults.standard.object(forKey: Keys.lastUpdateCheckAt) as? Date
     }
