@@ -161,7 +161,12 @@ struct PromptPanelView: View {
                             PendingRowView(
                                 entry: entry,
                                 isHighlighted: entry.id == viewModel.highlightedEntryID,
-                                onToggleCompleted: { intentStore.toggleCompleted(id: entry.id) },
+                                onToggleCompleted: {
+                                    intentStore.toggleCompleted(id: entry.id)
+                                    // Completing a task with an active alarm should silence it —
+                                    // there's nothing left to be reminded about.
+                                    if entry.reminderDate != nil { viewModel.cancelReminder(for: entry.id) }
+                                },
                                 onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                 onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
                                 onCancelReminder: { viewModel.cancelReminder(for: entry.id) },
