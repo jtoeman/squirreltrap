@@ -69,6 +69,7 @@ final class PromptPanelViewModel: ObservableObject {
         }
         if preferences.autoSnoozeAfterEntry {
             preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
+            debugLog("Squirrel Trap DEBUG: [addEntry] auto-snooze set snoozeUntil=\(preferences.snoozeUntil!)\n")
         }
         return entry
     }

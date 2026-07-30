@@ -57,9 +57,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         monitor.onSwitchGestureDetected = { [weak self] in
             guard let self else { return }
+            debugLog("Squirrel Trap DEBUG: [onSwitchGestureDetected] snoozeUntil=\(String(describing: self.preferences.snoozeUntil)), now=\(Date())\n")
             // Snooze only suppresses the Cmd+Tab trigger -- the menu bar icon
             // and Cmd+, still open the panel normally.
-            if let snoozeUntil = self.preferences.snoozeUntil, snoozeUntil > Date() { return }
+            if let snoozeUntil = self.preferences.snoozeUntil, snoozeUntil > Date() {
+                debugLog("Squirrel Trap DEBUG: [onSwitchGestureDetected] snoozed, suppressing show\n")
+                return
+            }
             self.panelController.showPromptPanel()
         }
         panelController.isSwitchGestureActive = { [weak monitor] in
