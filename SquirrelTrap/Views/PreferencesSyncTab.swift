@@ -7,11 +7,14 @@ struct PreferencesSyncTab: View {
     let intentStore: IntentStore
     var onOpenReminderSync: () -> Void
 
+    @State private var showCopiedConfirmation = false
+
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 12) {
             GridRow {
                 Text("iCloud Sync")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 HStack(spacing: 6) {
                     Toggle("", isOn: $preferences.iCloudSyncEnabled)
                         .labelsHidden()
@@ -49,12 +52,27 @@ struct PreferencesSyncTab: View {
 
             GridRow {
                 Text("")
-                Button("Export Open Items") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(intentStore.csvExport(), forType: .string)
+                HStack(spacing: 8) {
+                    Button("Export Open Items") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(intentStore.csvExport(), forType: .string)
+                        // This only ever copies to the clipboard, silently -- with
+                        // no confirmation it's indistinguishable from doing
+                        // nothing at all. Same fix as the update-check status.
+                        showCopiedConfirmation = true
+                        Task {
+                            try? await Task.sleep(for: .seconds(2))
+                            showCopiedConfirmation = false
+                        }
+                    }
+                    .help("Copies your open (not completed) items as CSV to the clipboard")
+                    if showCopiedConfirmation {
+                        Label("Copied", systemImage: "checkmark.circle")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.panelTextSecondary)
+                    }
                 }
-                .help("Copies your open (not completed) items as CSV to the clipboard")
             }
         }
         .font(.system(size: 12))

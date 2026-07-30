@@ -99,7 +99,7 @@ struct PreferencesView: View {
             VStack(spacing: 4) {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
-                    .frame(width: 64, height: 64)
+                    .frame(width: 108, height: 108)
                 Text("v\(appVersionString)")
                     .font(.system(size: 10))
                     .foregroundStyle(Color.panelTextSecondary)
@@ -115,7 +115,7 @@ struct PreferencesView: View {
                 }
             }
         }
-        .frame(width: 128, alignment: .leading)
+        .frame(width: 132, alignment: .leading)
     }
 
     /// Custom-styled rather than .pickerStyle(.segmented) or a native sidebar

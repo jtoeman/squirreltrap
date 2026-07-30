@@ -9,6 +9,7 @@ struct PreferencesAppearanceTab: View {
             GridRow {
                 Text("Show menu bar icon")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 Toggle("", isOn: $preferences.showMenuBarIcon)
                     .labelsHidden()
                     .help("Cmd+, always reopens Preferences, even with the icon hidden")
@@ -17,6 +18,7 @@ struct PreferencesAppearanceTab: View {
             GridRow {
                 Text("Enable translucency")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 Toggle("", isOn: $preferences.translucencyEnabled)
                     .labelsHidden()
                     .help("Turns off the frosted-glass blur for a solid card, independent of the system-wide Reduce Transparency setting")

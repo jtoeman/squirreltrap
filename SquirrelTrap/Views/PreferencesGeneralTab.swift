@@ -21,6 +21,7 @@ struct PreferencesGeneralTab: View {
             GridRow {
                 Text("Launch at Login")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 Toggle("", isOn: $launchAtLoginEnabled)
                     .labelsHidden()
                     .onChange(of: launchAtLoginEnabled) { _, newValue in
@@ -31,11 +32,23 @@ struct PreferencesGeneralTab: View {
             GridRow {
                 Text("Snooze for")
                     .foregroundStyle(Color.panelTextSecondary)
-                HStack(spacing: 6) {
-                    TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
-                        .frame(width: 56)
-                    Text("minutes")
-                        .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
+                HStack(spacing: 12) {
+                    // "minutes" sits below the combo box rather than beside it --
+                    // side-by-side, a narrow Grid column could squeeze this down
+                    // to less than one character of width and make SwiftUI wrap
+                    // it vertically, one letter per line. Stacking removes the
+                    // horizontal contention entirely rather than just papering
+                    // over it with a lineLimit that would still clip.
+                    VStack(spacing: 2) {
+                        TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
+                            .frame(width: 56)
+                        Text("minutes")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.panelTextSecondary)
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
                     Spacer(minLength: 12)
                     SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
                 }
@@ -45,17 +58,21 @@ struct PreferencesGeneralTab: View {
             GridRow {
                 Text("Auto-dismiss after")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 HStack(spacing: 6) {
                     TimeoutComboBox(value: $preferences.inactivityTimeout, options: [3, 5, 7, 10, 15, 20, 30])
                         .frame(width: 56)
                     Text("seconds")
                         .foregroundStyle(Color.panelTextSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
             }
 
             GridRow {
                 Text("Default Alarm")
                     .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
                 HStack(spacing: 6) {
                     Toggle("", isOn: $preferences.defaultAlarmEnabled)
                         .labelsHidden()
