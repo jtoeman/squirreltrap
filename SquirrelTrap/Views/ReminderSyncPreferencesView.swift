@@ -81,7 +81,7 @@ struct ReminderSyncPreferencesView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 440, alignment: .top)
+        .frame(width: 520, height: 460, alignment: .top)
         .onExitCommand(perform: onBack)
     }
 

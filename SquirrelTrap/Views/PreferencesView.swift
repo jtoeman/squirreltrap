@@ -9,8 +9,13 @@ struct PreferencesView: View {
     let reminderScheduler: ReminderScheduler
     @State private var launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
     @State private var permissionGranted = PermissionManager.status() == .granted
-    @State private var showingClearCompletedConfirm = false
-    @State private var showingClearAllConfirm = false
+    @State private var selectedTab: PreferencesTab = .general
+    // Local mirror of the General tab's confirmation-dialog state (owned there,
+    // reported up here via onConfirmationActiveChanged) so onExitCommand below
+    // can still avoid dismissing the whole panel while "Clear Finished/All
+    // Items" is up — see the matching guard on PanelController's
+    // suppressEscapeDismiss, which relies on the same callback.
+    @State private var hasActiveConfirmation = false
     var onBack: () -> Void
     var onDismiss: () -> Void
     var onQuit: () -> Void
@@ -18,185 +23,47 @@ struct PreferencesView: View {
     var onOpenReminderSync: () -> Void = {}
     var onSnooze: () -> Void = {}
 
-    // Escape while "Clear Finished/All Items" is up should cancel just that
-    // confirmation, not the whole panel too — see the matching guard on
-    // PanelController's suppressEscapeDismiss.
-    private var hasActiveConfirmation: Bool {
-        showingClearCompletedConfirm || showingClearAllConfirm
-    }
-
     private var appVersionString: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
     }
 
+    private func handleConfirmationActiveChanged(_ active: Bool) {
+        hasActiveConfirmation = active
+        onConfirmationActiveChanged(active)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
             header
+            tabBar
 
-            // Sharing a row (rather than an .overlay) puts permissionStatus at the
-            // same top edge as this toggle for free, via plain HStack alignment —
-            // no manual offset math, and no risk of the kind of layout-recursion
-            // warning an .overlay(.frame(maxWidth: .infinity)) combo could trigger.
-            HStack(alignment: .top) {
-                Toggle("Show menu bar icon", isOn: $preferences.showMenuBarIcon)
-                    .help("Cmd+, always reopens Preferences, even with the icon hidden")
-                Spacer(minLength: 8)
-                permissionStatus
-            }
-
-            HStack {
-                Toggle("Launch at Login", isOn: $launchAtLoginEnabled)
-                    .onChange(of: launchAtLoginEnabled) { _, newValue in
-                        LaunchAtLoginManager.setEnabled(newValue)
-                    }
-                Spacer(minLength: 8)
-                Toggle("Enable translucency", isOn: $preferences.translucencyEnabled)
-                    .help("Turns off the frosted-glass blur for a solid card, independent of the system-wide Reduce Transparency setting")
-            }
-
-            HStack(spacing: 6) {
-                Text("Auto-dismiss after")
-                    .foregroundStyle(Color.panelTextSecondary)
-                TimeoutComboBox(value: $preferences.inactivityTimeout, options: [3, 5, 7, 10, 15, 20, 30])
-                    .frame(width: 56)
-                Text("seconds")
-                    .foregroundStyle(Color.panelTextSecondary)
-            }
-            .font(.system(size: 12))
-
-            HStack(spacing: 6) {
-                Text("Snooze for")
-                    .foregroundStyle(Color.panelTextSecondary)
-                TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
-                    .frame(width: 56)
-                Text("minutes")
-                    .foregroundStyle(Color.panelTextSecondary)
-                Spacer(minLength: 8)
-                SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
-            }
-            .font(.system(size: 12))
-            .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
-
-            HStack(spacing: 6) {
-                Toggle("iCloud Sync", isOn: $preferences.iCloudSyncEnabled)
-                    .help("Keep your to-do list in sync across your Macs via iCloud — always both ways")
-                    .onChange(of: preferences.iCloudSyncEnabled) { oldValue, newValue in
-                        // Same reasoning as Reminders sync: flip the toggle on and
-                        // wait for the every-Nth-show fallback (or a push that
-                        // hasn't arrived yet) reads as "nothing happened" — sync
-                        // right away instead, same as turning on Reminders sync
-                        // immediately forces a list load.
-                        guard !oldValue, newValue else { return }
-                        Task { await cloudSyncEngine.sync() }
-                    }
-                if cloudSyncEngine.isSyncing {
-                    ProgressView()
-                        .controlSize(.small)
-                } else if preferences.iCloudSyncEnabled {
-                    Button("Sync Now") {
-                        Task { await cloudSyncEngine.sync() }
-                    }
-                    .controlSize(.small)
-                }
-                Spacer(minLength: 8)
-                Text(cloudSyncEngine.accountStatusDescription)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.panelTextSecondary)
-            }
-            .onAppear { cloudSyncEngine.refreshAccountStatus() }
-
-            HStack(spacing: 6) {
-                Toggle("Default Alarm", isOn: $preferences.defaultAlarmEnabled)
-                    .help("New to-dos automatically get a reminder set")
-                if preferences.defaultAlarmEnabled {
-                    Picker("", selection: $preferences.defaultAlarmDurationSeconds) {
-                        ForEach(IntentRowView.reminderDurations, id: \.seconds) { duration in
-                            Text(duration.label).tag(duration.seconds)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
-                    .fixedSize()
-                }
-                Spacer(minLength: 0)
-            }
-            .font(.system(size: 12))
-
-            Divider()
-                .padding(.top, 16)
-
-            // The logo sits beside the button stack, top-aligned with the first
-            // one, instead of below it — stacking it below (even inside a
-            // ScrollView) kept needing more vertical room than this fixed-height
-            // panel actually has, forcing a scrollbar no matter how things were
-            // padded. Side-by-side fits everything without scrolling at all.
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Button("Export Open Items") {
-                        let pasteboard = NSPasteboard.general
-                        pasteboard.clearContents()
-                        pasteboard.setString(intentStore.csvExport(), forType: .string)
-                    }
-                    .help("Copies your open (not completed) items as CSV to the clipboard")
-
-                    Button("Reminders Sync…", action: onOpenReminderSync)
-                        .help("Optionally sync with a Reminders list")
-
-                    Button("Clear Finished Items", role: .destructive) {
-                        showingClearCompletedConfirm = true
-                    }
-                    .confirmationDialog(
-                        "Delete all completed items? This can't be undone.",
-                        isPresented: $showingClearCompletedConfirm,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Delete Completed", role: .destructive) {
-                            for id in intentStore.clearCompleted() {
-                                reminderScheduler.cancel(for: id)
-                            }
-                        }
-                        Button("Cancel", role: .cancel) {}
-                    }
-
-                    Button("Clear All Items", role: .destructive) {
-                        showingClearAllConfirm = true
-                    }
-                    .confirmationDialog(
-                        "Delete your entire task history? This can't be undone.",
-                        isPresented: $showingClearAllConfirm,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Delete Everything", role: .destructive) {
-                            for id in intentStore.clearAll() {
-                                reminderScheduler.cancel(for: id)
-                            }
-                        }
-                        Button("Cancel", role: .cancel) {}
+            HStack(alignment: .top, spacing: 16) {
+                Group {
+                    switch selectedTab {
+                    case .general:
+                        PreferencesGeneralTab(
+                            preferences: preferences,
+                            intentStore: intentStore,
+                            reminderScheduler: reminderScheduler,
+                            launchAtLoginEnabled: $launchAtLoginEnabled,
+                            onConfirmationActiveChanged: handleConfirmationActiveChanged,
+                            onQuit: onQuit,
+                            onSnooze: onSnooze
+                        )
+                    case .appearance:
+                        PreferencesAppearanceTab(preferences: preferences, permissionGranted: $permissionGranted)
+                    case .sync:
+                        PreferencesSyncTab(
+                            preferences: preferences,
+                            cloudSyncEngine: cloudSyncEngine,
+                            intentStore: intentStore,
+                            onOpenReminderSync: onOpenReminderSync
+                        )
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
 
-                Spacer()
-
-                VStack(spacing: 4) {
-                    Image(nsImage: NSApp.applicationIconImage)
-                        .resizable()
-                        .frame(width: 100, height: 100)
-                    Text("v\(appVersionString)")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color.panelTextSecondary)
-                    if updateChecker.isChecking {
-                        ProgressView()
-                            .controlSize(.mini)
-                    } else if let update = updateChecker.availableUpdate {
-                        Link("Update to v\(update.version)", destination: update.url)
-                            .font(.system(size: 10))
-                    } else {
-                        Button("Check for Updates") {
-                            Task { await updateChecker.check() }
-                        }
-                        .controlSize(.mini)
-                    }
-                }
+                logoRail
             }
 
             Spacer(minLength: 0)
@@ -206,50 +73,71 @@ struct PreferencesView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 440, alignment: .top)
+        .frame(width: 520, height: 460, alignment: .top)
         .onExitCommand { if !hasActiveConfirmation { onDismiss() } }
-        .onAppear { permissionGranted = PermissionManager.status() == .granted }
-        .onChange(of: showingClearCompletedConfirm) { _, _ in onConfirmationActiveChanged(hasActiveConfirmation) }
-        .onChange(of: showingClearAllConfirm) { _, _ in onConfirmationActiveChanged(hasActiveConfirmation) }
     }
 
     private var header: some View {
-        ZStack {
-            VStack(spacing: 2) {
-                Text("Squirrel Trap")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color.panelTextPrimary)
-                Text("Preferences")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color.panelTextSecondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
+        VStack(spacing: 2) {
+            Text("Squirrel Trap")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Color.panelTextPrimary)
+            Text("Preferences")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.panelTextSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
 
-            HStack {
-                Spacer()
-                Button("Quit Squirrel Trap", role: .destructive, action: onQuit)
-                    .controlSize(.small)
+    /// Custom-styled rather than .pickerStyle(.segmented) -- native macOS tab
+    /// chrome would clash with the translucent blue glass card look everywhere
+    /// else in this app.
+    private var tabBar: some View {
+        HStack(spacing: 8) {
+            ForEach(PreferencesTab.allCases) { tab in
+                Button {
+                    selectedTab = tab
+                } label: {
+                    Text(tab.label)
+                        .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+                        .foregroundStyle(selectedTab == tab ? Color.panelTextPrimary : Color.panelTextSecondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background {
+                            if selectedTab == tab {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.accentColor.opacity(0.35))
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
             }
+            Spacer(minLength: 0)
         }
     }
 
-    // Sits to the right, below "Quit Squirrel Trap" (same trailing edge) — see
-    // the .overlay(alignment: .topTrailing) on the "Show menu bar icon" toggle.
-    @ViewBuilder
-    private var permissionStatus: some View {
-        if permissionGranted {
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle")
-                    .foregroundStyle(Color.accentColor)
-                Text("Watching for Cmd+Tab")
-                    .foregroundStyle(Color.panelTextSecondary)
+    /// Sits beside whichever tab is selected, not inside any of them -- stays
+    /// visible and in the same place regardless of tab.
+    private var logoRail: some View {
+        VStack(spacing: 4) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 100, height: 100)
+            Text("v\(appVersionString)")
+                .font(.system(size: 10))
+                .foregroundStyle(Color.panelTextSecondary)
+            if updateChecker.isChecking {
+                ProgressView()
+                    .controlSize(.mini)
+            } else if let update = updateChecker.availableUpdate {
+                Link("Update to v\(update.version)", destination: update.url)
+                    .font(.system(size: 10))
+            } else {
+                Button("Check for Updates") {
+                    Task { await updateChecker.check() }
+                }
+                .controlSize(.mini)
             }
-            .font(.system(size: 11))
-        } else {
-            Button("Grant Input Monitoring Access…") {
-                PermissionManager.requestAccessOrOpenSettings()
-            }
-            .controlSize(.small)
         }
     }
 

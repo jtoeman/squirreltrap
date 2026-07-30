@@ -33,6 +33,10 @@
 		5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */; };
 		5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090031 /* DebugLog.swift */; };
 		5FA1B2C3D4E5F607080900BC /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090032 /* UpdateChecker.swift */; };
+		5FA1B2C3D4E5F607080900BD /* PreferencesTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090033 /* PreferencesTab.swift */; };
+		5FA1B2C3D4E5F607080900BE /* PreferencesGeneralTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090034 /* PreferencesGeneralTab.swift */; };
+		5FA1B2C3D4E5F607080900BF /* PreferencesAppearanceTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090035 /* PreferencesAppearanceTab.swift */; };
+		5FA1B2C3D4E5F607080900C0 /* PreferencesSyncTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090036 /* PreferencesSyncTab.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -61,6 +65,10 @@
 		5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingRowView.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090023 /* ReminderSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncEngine.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSyncPreferencesView.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090033 /* PreferencesTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesTab.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090034 /* PreferencesGeneralTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesGeneralTab.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090035 /* PreferencesAppearanceTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesAppearanceTab.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090036 /* PreferencesSyncTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesSyncTab.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnoozeButton.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncEngine.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SquirrelTrap-Release.entitlements"; sourceTree = "<group>"; };
@@ -146,6 +154,10 @@
 				5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */,
 				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
 				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
+				5FA1B2C3D4E5F60708090033 /* PreferencesTab.swift */,
+				5FA1B2C3D4E5F60708090034 /* PreferencesGeneralTab.swift */,
+				5FA1B2C3D4E5F60708090035 /* PreferencesAppearanceTab.swift */,
+				5FA1B2C3D4E5F60708090036 /* PreferencesSyncTab.swift */,
 				5FA1B2C3D4E5F60708090024 /* ReminderSyncPreferencesView.swift */,
 				5FA1B2C3D4E5F6070809001E /* KofiButton.swift */,
 				5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */,
@@ -249,6 +261,10 @@
 				5FA1B2C3D4E5F607080900BA /* CloudSyncEngine.swift in Sources */,
 				5FA1B2C3D4E5F607080900BB /* DebugLog.swift in Sources */,
 				5FA1B2C3D4E5F607080900BC /* UpdateChecker.swift in Sources */,
+				5FA1B2C3D4E5F607080900BD /* PreferencesTab.swift in Sources */,
+				5FA1B2C3D4E5F607080900BE /* PreferencesGeneralTab.swift in Sources */,
+				5FA1B2C3D4E5F607080900BF /* PreferencesAppearanceTab.swift in Sources */,
+				5FA1B2C3D4E5F607080900C0 /* PreferencesSyncTab.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

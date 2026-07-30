@@ -31,7 +31,7 @@ final class PanelController: NSObject {
     // below" cue instead of clipping cleanly at a full row boundary); the window
     // itself is padded out by cardMargin on every side so the close button can
     // sit outside the card's own corner without being clipped at the window edge.
-    private let cardSize = NSSize(width: 420, height: 440)
+    private let cardSize = NSSize(width: 520, height: 460)
     private let cardMargin: CGFloat = 20
     private var windowSize: NSSize {
         NSSize(width: cardSize.width + cardMargin * 2, height: cardSize.height + cardMargin * 2)

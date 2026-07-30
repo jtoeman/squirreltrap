@@ -84,7 +84,7 @@ struct PromptPanelView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .padding(.top, 10)
-        .frame(width: 420, height: 440, alignment: .top)
+        .frame(width: 520, height: 460, alignment: .top)
         // SwiftUI's own exit-command path — needed alongside DismissiblePanel's
         // AppKit-level cancelOperation because a focused TextField sometimes
         // swallows Escape before it ever reaches the responder chain. Both
