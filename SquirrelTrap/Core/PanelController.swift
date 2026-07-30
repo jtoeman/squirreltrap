@@ -141,9 +141,14 @@ final class PanelController: NSObject {
         ) { [weak self] notification in
             let app = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName ?? "?"
             debugLog("Squirrel Trap DEBUG: [didActivateApplication] \(app)\n")
-            guard let self, !self.hasReclaimedFocusForCurrentShow else { return }
-            self.hasReclaimedFocusForCurrentShow = true
-            self.reclaimKeyFocusIfVisible()
+            // NotificationCenter's queue:.main guarantees this always runs on the
+            // main thread, but the closure type isn't statically MainActor-isolated
+            // -- the Task hop satisfies the compiler without changing behavior.
+            Task { @MainActor in
+                guard let self, !self.hasReclaimedFocusForCurrentShow else { return }
+                self.hasReclaimedFocusForCurrentShow = true
+                self.reclaimKeyFocusIfVisible()
+            }
         }
     }
 
@@ -413,7 +418,11 @@ final class PanelController: NSObject {
             context.duration = 0.3
             panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
-            self?.hidePanel()
+            // NSAnimationContext always invokes this on the main thread, but its
+            // completionHandler parameter isn't statically MainActor-isolated.
+            Task { @MainActor in
+                self?.hidePanel()
+            }
         })
     }
 
@@ -453,8 +462,12 @@ final class PanelController: NSObject {
             panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             debugLog("Squirrel Trap DEBUG: [snoozeAndFadeOut] fade animation completed\n")
-            self?.hidePanel()
-            self?.resetSnoozeMessageOverlay()
+            // See fadeOutAndHide()'s completion handler for why this Task hop
+            // is needed despite always running on the main thread already.
+            Task { @MainActor in
+                self?.hidePanel()
+                self?.resetSnoozeMessageOverlay()
+            }
         })
     }
 
