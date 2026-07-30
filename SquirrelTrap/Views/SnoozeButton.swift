@@ -11,7 +11,9 @@ struct SnoozeButton: View {
             HStack(spacing: 6) {
                 Image(systemName: "moon.zzz.fill")
                 Text("Snooze (\(Int(minutes))m)")
+                    .lineLimit(1)
             }
+            .fixedSize()
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(.white)
             .padding(.horizontal, 12)

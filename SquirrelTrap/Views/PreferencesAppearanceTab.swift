@@ -15,16 +15,16 @@ struct PreferencesAppearanceTab: View {
             }
 
             GridRow {
-                Text("")
-                permissionStatus
-            }
-
-            GridRow {
                 Text("Enable translucency")
                     .foregroundStyle(Color.panelTextSecondary)
                 Toggle("", isOn: $preferences.translucencyEnabled)
                     .labelsHidden()
                     .help("Turns off the frosted-glass blur for a solid card, independent of the system-wide Reduce Transparency setting")
+            }
+
+            GridRow {
+                Text("")
+                permissionStatus
             }
         }
         .font(.system(size: 12))

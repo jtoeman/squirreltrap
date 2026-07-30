@@ -42,13 +42,13 @@ struct PreferencesSyncTab: View {
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 Button("Reminders Sync…", action: onOpenReminderSync)
                     .help("Optionally sync with a Reminders list")
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 Button("Export Open Items") {
                     let pasteboard = NSPasteboard.general
                     pasteboard.clearContents()
