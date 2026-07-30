@@ -35,9 +35,12 @@ struct PreferencesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
-            tabBar
 
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                sidebar
+
+                Divider()
+
                 Group {
                     switch selectedTab {
                     case .general:
@@ -62,8 +65,6 @@ struct PreferencesView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
-
-                logoRail
             }
 
             Spacer(minLength: 0)
@@ -89,55 +90,88 @@ struct PreferencesView: View {
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    /// Custom-styled rather than .pickerStyle(.segmented) -- native macOS tab
-    /// chrome would clash with the translucent blue glass card look everywhere
-    /// else in this app.
-    private var tabBar: some View {
-        HStack(spacing: 8) {
-            ForEach(PreferencesTab.allCases) { tab in
-                Button {
-                    selectedTab = tab
-                } label: {
-                    Text(tab.label)
-                        .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
-                        .foregroundStyle(selectedTab == tab ? Color.panelTextPrimary : Color.panelTextSecondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background {
-                            if selectedTab == tab {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(Color.accentColor.opacity(0.35))
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
+    /// Left column: logo/version/update-check up top (always visible regardless
+    /// of tab, since it lives here rather than inside any tab's content), then
+    /// the tab list below it -- a vertical sidebar rather than a horizontal tab
+    /// bar, matching the reference layout this was modeled on.
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(spacing: 4) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 64, height: 64)
+                Text("v\(appVersionString)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.panelTextSecondary)
+                updateStatus
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(PreferencesTab.allCases) { tab in
+                    tabButton(tab)
+                }
+            }
         }
+        .frame(width: 128, alignment: .leading)
     }
 
-    /// Sits beside whichever tab is selected, not inside any of them -- stays
-    /// visible and in the same place regardless of tab.
-    private var logoRail: some View {
-        VStack(spacing: 4) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .frame(width: 100, height: 100)
-            Text("v\(appVersionString)")
+    /// Custom-styled rather than .pickerStyle(.segmented) or a native sidebar
+    /// List -- both would pull in chrome that clashes with the translucent
+    /// blue glass card look everywhere else in this app.
+    private func tabButton(_ tab: PreferencesTab) -> some View {
+        Button {
+            selectedTab = tab
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: tab.icon)
+                    .frame(width: 14)
+                Text(tab.label)
+                Spacer(minLength: 0)
+            }
+            .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+            .foregroundStyle(selectedTab == tab ? Color.panelTextPrimary : Color.panelTextSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background {
+                if selectedTab == tab {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.35))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Persistent confirmation that a check actually happened, rather than a
+    /// manual "Check for Updates" click silently reverting to itself with no
+    /// visible feedback when nothing newer is found.
+    @ViewBuilder
+    private var updateStatus: some View {
+        if updateChecker.isChecking {
+            ProgressView()
+                .controlSize(.mini)
+        } else if let update = updateChecker.availableUpdate {
+            Link("Update to v\(update.version)", destination: update.url)
                 .font(.system(size: 10))
-                .foregroundStyle(Color.panelTextSecondary)
-            if updateChecker.isChecking {
-                ProgressView()
-                    .controlSize(.mini)
-            } else if let update = updateChecker.availableUpdate {
-                Link("Update to v\(update.version)", destination: update.url)
+        } else if preferences.lastUpdateCheckAt != nil {
+            VStack(spacing: 3) {
+                Label("Up to date", systemImage: "checkmark.circle")
                     .font(.system(size: 10))
-            } else {
-                Button("Check for Updates") {
+                    .foregroundStyle(Color.panelTextSecondary)
+                Button("Check Again") {
                     Task { await updateChecker.check() }
                 }
                 .controlSize(.mini)
             }
+        } else {
+            Button("Check for Updates") {
+                Task { await updateChecker.check() }
+            }
+            .controlSize(.mini)
         }
     }
 

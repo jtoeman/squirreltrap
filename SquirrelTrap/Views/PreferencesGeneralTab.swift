@@ -74,7 +74,7 @@ struct PreferencesGeneralTab: View {
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 Button("Clear Finished Items", role: .destructive) {
                     showingClearCompletedConfirm = true
                 }
@@ -93,7 +93,7 @@ struct PreferencesGeneralTab: View {
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 Button("Clear All Items", role: .destructive) {
                     showingClearAllConfirm = true
                 }
@@ -112,7 +112,7 @@ struct PreferencesGeneralTab: View {
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 Button("Quit Squirrel Trap", role: .destructive, action: onQuit)
             }
         }

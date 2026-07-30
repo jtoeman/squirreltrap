@@ -15,7 +15,7 @@ struct PreferencesAppearanceTab: View {
             }
 
             GridRow {
-                Color.clear
+                Text("")
                 permissionStatus
             }
 

@@ -14,4 +14,12 @@ enum PreferencesTab: String, CaseIterable, Identifiable {
         case .sync: return "Sync"
         }
     }
+
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .appearance: return "paintbrush"
+        case .sync: return "arrow.triangle.2.circlepath"
+        }
+    }
 }
