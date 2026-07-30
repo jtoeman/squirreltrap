@@ -56,6 +56,15 @@ struct PreferencesGeneralTab: View {
             }
 
             GridRow {
+                Text("Auto-snooze after entry")
+                    .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
+                Toggle("", isOn: $preferences.autoSnoozeAfterEntry)
+                    .labelsHidden()
+                    .help("Adding a to-do also snoozes Cmd+Tab for the duration above, same as clicking Snooze by hand")
+            }
+
+            GridRow {
                 Text("Auto-dismiss after")
                     .foregroundStyle(Color.panelTextSecondary)
                     .lineLimit(1)

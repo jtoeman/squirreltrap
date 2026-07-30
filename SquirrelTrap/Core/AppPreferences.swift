@@ -69,6 +69,12 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurationMinutes, forKey: Keys.snoozeDurationMinutes) }
     }
 
+    /// When on, adding a to-do also snoozes Cmd+Tab for snoozeDurationMinutes —
+    /// same effect as clicking Snooze by hand, just automatic.
+    @Published var autoSnoozeAfterEntry: Bool {
+        didSet { UserDefaults.standard.set(autoSnoozeAfterEntry, forKey: Keys.autoSnoozeAfterEntry) }
+    }
+
     /// When on, every new to-do gets a reminder set automatically, using
     /// defaultAlarmDurationSeconds — same durations as the per-item alarm
     /// button (IntentRowView.reminderDurations).
@@ -141,6 +147,7 @@ final class AppPreferences: ObservableObject {
         static let lastReminderSyncAt = "lastReminderSyncAt"
         static let snoozeUntil = "snoozeUntil"
         static let snoozeDurationMinutes = "snoozeDurationMinutes"
+        static let autoSnoozeAfterEntry = "autoSnoozeAfterEntry"
         static let defaultAlarmEnabled = "defaultAlarmEnabled"
         static let defaultAlarmDurationSeconds = "defaultAlarmDurationSeconds"
         static let iCloudSyncEnabled = "iCloudSyncEnabled"
@@ -193,6 +200,8 @@ final class AppPreferences: ObservableObject {
         } else {
             snoozeDurationMinutes = UserDefaults.standard.double(forKey: Keys.snoozeDurationMinutes)
         }
+
+        autoSnoozeAfterEntry = UserDefaults.standard.bool(forKey: Keys.autoSnoozeAfterEntry)
 
         defaultAlarmEnabled = UserDefaults.standard.bool(forKey: Keys.defaultAlarmEnabled)
         if UserDefaults.standard.object(forKey: Keys.defaultAlarmDurationSeconds) == nil {

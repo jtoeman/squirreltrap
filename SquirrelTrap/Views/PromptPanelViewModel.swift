@@ -58,13 +58,17 @@ final class PromptPanelViewModel: ObservableObject {
     }
 
     /// Shared by submit() and repeatFavorite() so "every new to-do gets a
-    /// reminder" (Preferences' Default Alarm toggle) only needs implementing
-    /// once, using the same duration presets as the per-item alarm button.
+    /// reminder" (Preferences' Default Alarm toggle) and "every new to-do also
+    /// snoozes Cmd+Tab" (Auto-snooze after entry) only need implementing once,
+    /// each independent of the other's state.
     @discardableResult
     private func addEntryApplyingDefaultAlarm(text: String) -> IntentEntry {
         let entry = intentStore.add(text: text)
         if preferences.defaultAlarmEnabled {
             setReminder(for: entry.id, duration: preferences.defaultAlarmDurationSeconds)
+        }
+        if preferences.autoSnoozeAfterEntry {
+            preferences.snoozeUntil = Date().addingTimeInterval(preferences.snoozeDurationMinutes * 60)
         }
         return entry
     }
