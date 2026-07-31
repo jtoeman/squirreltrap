@@ -7,7 +7,6 @@ struct PreferencesGeneralTab: View {
     @Binding var launchAtLoginEnabled: Bool
     var onConfirmationActiveChanged: (Bool) -> Void
     var onQuit: () -> Void
-    var onSnooze: () -> Void
 
     @State private var showingClearCompletedConfirm = false
     @State private var showingClearAllConfirm = false
@@ -40,10 +39,8 @@ struct PreferencesGeneralTab: View {
                         .foregroundStyle(Color.panelTextSecondary)
                         .lineLimit(1)
                         .fixedSize()
-                    Spacer(minLength: 8)
-                    SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
                 }
-                .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
+                .help("How long the Snooze button (bottom-left of this panel) suppresses Cmd+Tab for")
             }
 
             GridRow {

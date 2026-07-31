@@ -50,8 +50,7 @@ struct PreferencesView: View {
                             reminderScheduler: reminderScheduler,
                             launchAtLoginEnabled: $launchAtLoginEnabled,
                             onConfirmationActiveChanged: handleConfirmationActiveChanged,
-                            onQuit: onQuit,
-                            onSnooze: onSnooze
+                            onQuit: onQuit
                         )
                     case .appearance:
                         PreferencesAppearanceTab(preferences: preferences, permissionGranted: $permissionGranted)
@@ -176,9 +175,12 @@ struct PreferencesView: View {
     }
 
     /// Mirrors the main panel's footer exactly: a utility icon at the bottom-left
-    /// (gear there, back-chevron here) and the Ko-fi button at the bottom-right.
+    /// (gear there, back-chevron here), the Snooze button pinned at the same
+    /// on-screen spot it occupies there too -- rather than living inside
+    /// General's Grid where its position shifted with the row's own content --
+    /// and the Ko-fi button at the bottom-right.
     private var footer: some View {
-        HStack {
+        HStack(spacing: 8) {
             Button(action: onBack) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 13))
@@ -187,6 +189,9 @@ struct PreferencesView: View {
             .buttonStyle(.plain)
             .help("Back to Squirrel Trap")
             .accessibilityLabel("Back to Squirrel Trap")
+
+            SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
+                .help("Snooze Cmd+Tab for a while")
 
             Spacer()
 
