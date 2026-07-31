@@ -17,7 +17,7 @@ struct PreferencesGeneralTab: View {
     }
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 12) {
+        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
             GridRow {
                 Text("Launch at Login")
                     .foregroundStyle(Color.panelTextSecondary)
