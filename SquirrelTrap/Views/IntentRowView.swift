@@ -7,9 +7,13 @@ struct IntentRowView: View {
     let onToggleFavorite: () -> Void
     var onSetReminder: ((TimeInterval) -> Void)?
     var onCancelReminder: (() -> Void)?
+    var onSetColor: ((TodoColorTag?) -> Void)?
     var onDelete: (() -> Void)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingReminderPicker = false
+    @State private var isShowingColorPicker = false
+
+    private static let colorGridColumns = Array(repeating: GridItem(.fixed(28), spacing: 6), count: 4)
 
     /// Not private — PreferencesView's "Default Alarm" picker reuses this
     /// exact same list, so the two stay in sync automatically.
@@ -44,9 +48,14 @@ struct IntentRowView: View {
 
             Spacer(minLength: 0)
 
-            // Reminders only make sense for tasks you haven't finished yet.
+            // Reminders and color tagging only make sense for tasks you
+            // haven't finished yet -- same gate as the clock icon.
             if !entry.completed, let onSetReminder, let onCancelReminder {
                 reminderControl(onSetReminder: onSetReminder, onCancelReminder: onCancelReminder)
+            }
+
+            if !entry.completed, let onSetColor {
+                colorControl(onSetColor: onSetColor)
             }
 
             Button(action: onToggleFavorite) {
@@ -71,7 +80,7 @@ struct IntentRowView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 10)
-        .glassCard()
+        .glassCard(tint: entry.colorTag?.color ?? .accentColor)
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(Color.accentColor, lineWidth: isHighlighted ? 2 : 0)
@@ -115,6 +124,49 @@ struct IntentRowView: View {
                 }
             }
             .padding(.vertical, 4)
+        }
+    }
+
+    @ViewBuilder
+    private func colorControl(onSetColor: @escaping (TodoColorTag?) -> Void) -> some View {
+        // Same shell as reminderControl (plain Button, fixed 20x20 frame,
+        // .popover) so both icons stay pixel-aligned with each other and the
+        // star/checkbox. Unlike the reminder icon, tapping this one always
+        // opens the grid -- clearing happens by tapping the already-selected
+        // swatch a second time, inside the grid itself.
+        Button {
+            isShowingColorPicker = true
+        } label: {
+            Image(systemName: entry.colorTag != nil ? "paintpalette.fill" : "paintpalette")
+                .font(.system(size: 13))
+                .foregroundStyle(entry.colorTag?.color ?? Color.accentColor.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .frame(width: 20, height: 20)
+        .help(entry.colorTag != nil ? "Change or remove color" : "Assign a color")
+        .accessibilityLabel(entry.colorTag != nil ? "Change or remove color" : "Assign a color")
+        .popover(isPresented: $isShowingColorPicker) {
+            LazyVGrid(columns: Self.colorGridColumns, spacing: 6) {
+                ForEach(TodoColorTag.allCases, id: \.self) { tag in
+                    Button {
+                        onSetColor(entry.colorTag == tag ? nil : tag)
+                        isShowingColorPicker = false
+                    } label: {
+                        Circle()
+                            .fill(tag.color)
+                            .frame(width: 24, height: 24)
+                            .overlay {
+                                if entry.colorTag == tag {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(12)
         }
     }
 }

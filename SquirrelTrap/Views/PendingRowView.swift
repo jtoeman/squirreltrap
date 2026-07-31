@@ -11,6 +11,7 @@ struct PendingRowView: View {
     let onToggleFavorite: () -> Void
     let onSetReminder: (TimeInterval) -> Void
     let onCancelReminder: () -> Void
+    let onSetColor: (TodoColorTag?) -> Void
     let onDrop: (UUID) -> Void
     var onDragHandleHoverChanged: (Bool) -> Void = { _ in }
 
@@ -24,7 +25,8 @@ struct PendingRowView: View {
                 onToggleCompleted: onToggleCompleted,
                 onToggleFavorite: onToggleFavorite,
                 onSetReminder: onSetReminder,
-                onCancelReminder: onCancelReminder
+                onCancelReminder: onCancelReminder,
+                onSetColor: onSetColor
             )
 
             Image(systemName: "line.3.horizontal")

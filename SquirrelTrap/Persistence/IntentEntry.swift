@@ -22,6 +22,8 @@ struct IntentEntry: Identifiable, Codable, Equatable {
     /// source of truth for order once synced. IntentStore keeps the local
     /// array sorted to match after every pull.
     var sortRank: Double
+    /// One of 16 preset colors, or nil if never tagged.
+    var colorTag: TodoColorTag?
 
     init(
         id: UUID = UUID(),
@@ -33,7 +35,8 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         reminderDate: Date? = nil,
         reminderSyncID: String? = nil,
         lastModifiedAt: Date? = nil,
-        sortRank: Double = 0
+        sortRank: Double = 0,
+        colorTag: TodoColorTag? = nil
     ) {
         self.id = id
         self.text = text
@@ -45,11 +48,12 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         self.reminderSyncID = reminderSyncID
         self.lastModifiedAt = lastModifiedAt ?? createdAt
         self.sortRank = sortRank
+        self.colorTag = colorTag
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, text, createdAt, completed, completedAt, favorite, reminderDate
-        case reminderSyncID, lastModifiedAt, sortRank
+        case reminderSyncID, lastModifiedAt, sortRank, colorTag
     }
 
     // Custom decoder so entries.json files saved before `favorite`/`reminderDate`
@@ -69,5 +73,6 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         reminderSyncID = try container.decodeIfPresent(String.self, forKey: .reminderSyncID)
         lastModifiedAt = try container.decodeIfPresent(Date.self, forKey: .lastModifiedAt) ?? createdAt
         sortRank = try container.decodeIfPresent(Double.self, forKey: .sortRank) ?? 0
+        colorTag = try container.decodeIfPresent(TodoColorTag.self, forKey: .colorTag)
     }
 }

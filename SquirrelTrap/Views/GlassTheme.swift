@@ -18,12 +18,15 @@ extension Color {
 /// gentle drop shadow so it visibly separates from the tinted background behind it.
 struct GlassCard: ViewModifier {
     var cornerRadius: CGFloat = 10
+    /// Lets a to-do's assigned color tag tint its own row instead of the
+    /// default accent blue every other glass card uses.
+    var tint: Color = .accentColor
 
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.24))
+                    .fill(tint.opacity(0.24))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -41,7 +44,7 @@ struct GlassCard: ViewModifier {
 }
 
 extension View {
-    func glassCard(cornerRadius: CGFloat = 10) -> some View {
-        modifier(GlassCard(cornerRadius: cornerRadius))
+    func glassCard(cornerRadius: CGFloat = 10, tint: Color = .accentColor) -> some View {
+        modifier(GlassCard(cornerRadius: cornerRadius, tint: tint))
     }
 }

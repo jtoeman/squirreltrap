@@ -184,6 +184,7 @@ struct PromptPanelView: View {
                                 onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                 onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
                                 onCancelReminder: { viewModel.cancelReminder(for: entry.id) },
+                                onSetColor: { color in intentStore.setColor(id: entry.id, colorTag: color) },
                                 onDrop: { draggedID in intentStore.movePendingEntry(id: draggedID, before: entry.id) },
                                 onDragHandleHoverChanged: onDragHandleHoverChanged
                             )

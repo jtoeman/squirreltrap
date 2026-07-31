@@ -176,6 +176,13 @@ final class IntentStore: ObservableObject {
         save()
     }
 
+    func setColor(id: UUID, colorTag: TodoColorTag?) {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
+        entries[index].colorTag = colorTag
+        entries[index].lastModifiedAt = Date()
+        save()
+    }
+
     /// Every entry with a pending reminder, regardless of the rolling display
     /// window — used both to restore timers on launch and to list them in the
     /// menu bar.

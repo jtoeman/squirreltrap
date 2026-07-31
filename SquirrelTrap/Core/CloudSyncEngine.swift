@@ -191,7 +191,8 @@ final class CloudSyncEngine: ObservableObject {
             favorite: record["favorite"] as? Bool ?? false,
             reminderDate: record["reminderDate"] as? Date,
             lastModifiedAt: remoteModified,
-            sortRank: record["sortRank"] as? Double ?? 0
+            sortRank: record["sortRank"] as? Double ?? 0,
+            colorTag: TodoColorTag(rawValue: record["colorTag"] as? String ?? "")
         )
         intentStore.applyCloudEntry(entry)
     }
@@ -240,6 +241,7 @@ final class CloudSyncEngine: ObservableObject {
         record["favorite"] = entry.favorite as CKRecordValue
         record["reminderDate"] = entry.reminderDate as CKRecordValue?
         record["sortRank"] = entry.sortRank as CKRecordValue
+        record["colorTag"] = entry.colorTag?.rawValue as CKRecordValue?
         return record
     }
 }

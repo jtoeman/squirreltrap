@@ -37,6 +37,7 @@
 		5FA1B2C3D4E5F607080900BE /* PreferencesGeneralTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090034 /* PreferencesGeneralTab.swift */; };
 		5FA1B2C3D4E5F607080900BF /* PreferencesAppearanceTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090035 /* PreferencesAppearanceTab.swift */; };
 		5FA1B2C3D4E5F607080900C0 /* PreferencesSyncTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090036 /* PreferencesSyncTab.swift */; };
+		5FA1B2C3D4E5F607080900C1 /* TodoColorTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090037 /* TodoColorTag.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +70,7 @@
 		5FA1B2C3D4E5F60708090034 /* PreferencesGeneralTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesGeneralTab.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090035 /* PreferencesAppearanceTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesAppearanceTab.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090036 /* PreferencesSyncTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesSyncTab.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F60708090037 /* TodoColorTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoColorTag.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnoozeButton.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncEngine.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SquirrelTrap-Release.entitlements"; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 			children = (
 				5FA1B2C3D4E5F60708090013 /* IntentEntry.swift */,
 				5FA1B2C3D4E5F60708090014 /* IntentStore.swift */,
+				5FA1B2C3D4E5F60708090037 /* TodoColorTag.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -265,6 +268,7 @@
 				5FA1B2C3D4E5F607080900BE /* PreferencesGeneralTab.swift in Sources */,
 				5FA1B2C3D4E5F607080900BF /* PreferencesAppearanceTab.swift in Sources */,
 				5FA1B2C3D4E5F607080900C0 /* PreferencesSyncTab.swift in Sources */,
+				5FA1B2C3D4E5F607080900C1 /* TodoColorTag.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
