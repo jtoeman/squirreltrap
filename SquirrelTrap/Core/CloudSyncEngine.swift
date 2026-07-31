@@ -107,7 +107,6 @@ final class CloudSyncEngine: ObservableObject {
         await ensureSubscriptionExists()
         await pull()
         await push()
-        preferences.lastCloudSyncAt = Date()
     }
 
     private func pull() async {
@@ -197,11 +196,20 @@ final class CloudSyncEngine: ObservableObject {
         intentStore.applyCloudEntry(entry)
     }
 
-    /// Local changes flow out: anything modified since the last sync gets
-    /// saved (savePolicy .allKeys so a freshly constructed CKRecord — no
-    /// fetch-before-write round trip — always wins, consistent with our own
-    /// app-level "most recent wins" policy), and any local deletion still
+    /// Local changes flow out: anything modified since the last *successful*
+    /// push gets saved (savePolicy .allKeys so a freshly constructed CKRecord
+    /// — no fetch-before-write round trip — always wins, consistent with our
+    /// own app-level "most recent wins" policy), and any local deletion still
     /// owed to the cloud gets sent as a real record deletion.
+    ///
+    /// lastCloudSyncAt only advances here, and only when the push actually
+    /// succeeds (or there was nothing to push) — it's also this function's
+    /// own filter threshold for "what's changed since last time." Previously
+    /// sync() advanced it unconditionally after awaiting push(), so a single
+    /// failed CKModifyRecordsOperation (network blip, iCloud hiccup, no
+    /// matter how transient) silently and *permanently* excluded every item
+    /// in that batch from ever being retried, since their lastModifiedAt was
+    /// now stuck behind an already-advanced timestamp.
     private func push() async {
         let lastSync = preferences.lastCloudSyncAt ?? .distantPast
         let toSave = intentStore.entries
@@ -210,25 +218,31 @@ final class CloudSyncEngine: ObservableObject {
         let deletionIDs = intentStore.pendingCloudDeletionIDs
         let toDelete = deletionIDs.map { CKRecord.ID(recordName: $0.uuidString, zoneID: zoneID) }
 
-        guard !toSave.isEmpty || !toDelete.isEmpty else { return }
+        guard !toSave.isEmpty || !toDelete.isEmpty else {
+            preferences.lastCloudSyncAt = Date()
+            return
+        }
 
         let operation = CKModifyRecordsOperation(recordsToSave: toSave, recordIDsToDelete: toDelete)
         operation.savePolicy = .allKeys
 
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+        let succeeded = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             operation.modifyRecordsResultBlock = { result in
                 if case .failure(let error) = result {
                     debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] push failed: \(error)\n")
                 }
-                continuation.resume()
+                continuation.resume(returning: (try? result.get()) != nil)
             }
             database.add(operation)
         }
 
-        if !toDelete.isEmpty {
-            intentStore.clearPendingCloudDeletions(deletionIDs)
+        if succeeded {
+            if !toDelete.isEmpty {
+                intentStore.clearPendingCloudDeletions(deletionIDs)
+            }
+            preferences.lastCloudSyncAt = Date()
         }
-        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pushed \(toSave.count) saved, \(toDelete.count) deleted\n")
+        debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pushed \(toSave.count) saved, \(toDelete.count) deleted, succeeded=\(succeeded)\n")
     }
 
     private func makeRecord(for entry: IntentEntry) -> CKRecord {
