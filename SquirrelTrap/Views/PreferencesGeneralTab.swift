@@ -17,7 +17,7 @@ struct PreferencesGeneralTab: View {
     }
 
     var body: some View {
-        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
+        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
             GridRow {
                 Text("Launch at Login")
                     .foregroundStyle(Color.panelTextSecondary)
@@ -33,30 +33,21 @@ struct PreferencesGeneralTab: View {
                 Text("Snooze for")
                     .foregroundStyle(Color.panelTextSecondary)
                     .lineLimit(1)
-                HStack(spacing: 12) {
-                    // "minutes" sits below the combo box rather than beside it --
-                    // side-by-side, a narrow Grid column could squeeze this down
-                    // to less than one character of width and make SwiftUI wrap
-                    // it vertically, one letter per line. Stacking removes the
-                    // horizontal contention entirely rather than just papering
-                    // over it with a lineLimit that would still clip.
-                    VStack(spacing: 2) {
-                        TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
-                            .frame(width: 56)
-                        Text("minutes")
-                            .font(.system(size: 10))
-                            .foregroundStyle(Color.panelTextSecondary)
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-                    Spacer(minLength: 12)
+                HStack(spacing: 6) {
+                    TimeoutComboBox(value: $preferences.snoozeDurationMinutes, options: [5, 10, 15, 30, 60])
+                        .frame(width: 56)
+                    Text("minutes")
+                        .foregroundStyle(Color.panelTextSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
+                    Spacer(minLength: 8)
                     SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
                 }
                 .help("How long the Snooze button on the main panel suppresses Cmd+Tab for")
             }
 
             GridRow {
-                Text("Auto-snooze after entry")
+                Text("Auto-Snooze")
                     .foregroundStyle(Color.panelTextSecondary)
                     .lineLimit(1)
                 Toggle("", isOn: $preferences.autoSnoozeAfterEntry)
@@ -65,7 +56,7 @@ struct PreferencesGeneralTab: View {
             }
 
             GridRow {
-                Text("Auto-dismiss after")
+                Text("Auto-Dismiss")
                     .foregroundStyle(Color.panelTextSecondary)
                     .lineLimit(1)
                 HStack(spacing: 6) {

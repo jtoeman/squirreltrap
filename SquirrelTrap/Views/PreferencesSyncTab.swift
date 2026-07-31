@@ -10,7 +10,7 @@ struct PreferencesSyncTab: View {
     @State private var showCopiedConfirmation = false
 
     var body: some View {
-        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
+        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
             GridRow {
                 Text("iCloud Sync")
                     .foregroundStyle(Color.panelTextSecondary)

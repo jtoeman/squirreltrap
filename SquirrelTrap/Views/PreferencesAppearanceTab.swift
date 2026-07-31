@@ -5,7 +5,7 @@ struct PreferencesAppearanceTab: View {
     @Binding var permissionGranted: Bool
 
     var body: some View {
-        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
+        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
             GridRow {
                 Text("Show menu bar icon")
                     .foregroundStyle(Color.panelTextSecondary)
