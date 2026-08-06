@@ -209,20 +209,42 @@ final class PanelController: NSObject {
         // The SwiftUI-level @FocusState/focusToken mechanism (still bumped
         // above via reset()) isn't reliable in this hand-rolled
         // NSPanel/NSHostingController setup right after setContent() tears
-        // down whatever content was showing before (e.g. Preferences) and
-        // swaps this one in -- so grab focus directly at the AppKit level
-        // instead. SwiftUI's macOS TextField backs onto a private
-        // "AppKitTextField" class, not NSTextView (confirmed via a full
-        // subview-tree dump), so this targets the first view anywhere in the
-        // tree with canBecomeKeyView == true -- that's reliably the text
-        // field, since it's laid out before the scrollable list/footer
-        // (whose buttons are the only other canBecomeKeyView views). A short
-        // delay gives SwiftUI's layout pass time to actually materialize it
-        // after being reattached to the window.
+        // down whatever content was showing before and swaps this one in --
+        // so grab focus directly at the AppKit level instead. SwiftUI's
+        // macOS TextField backs onto a private "AppKitTextField" class, not
+        // NSTextView (confirmed via a full subview-tree dump), so this
+        // targets the first view anywhere in the tree with
+        // canBecomeKeyView == true -- reliably the text field, since it's
+        // laid out before the scrollable list/footer (whose buttons are the
+        // only other canBecomeKeyView views).
+        //
+        // A single fixed delay before this attempt was flaky -- how long
+        // AppKit/SwiftUI actually take to finish laying the view back out
+        // after being reattached to the window varies, so a guess that's
+        // usually-but-not-always long enough just moves the race instead of
+        // closing it. Retrying on a short interval until makeFirstResponder
+        // actually confirms success (rather than firing once and hoping) is
+        // what actually closes it.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let self, let contentContainer = self.contentContainer,
-                  let keyView = self.firstKeyableView(in: contentContainer) else { return }
-            self.panel?.makeFirstResponder(keyView)
+            self?.grabPromptFocus(attemptsRemaining: 8)
+        }
+    }
+
+    private func grabPromptFocus(attemptsRemaining: Int) {
+        guard let contentContainer, let keyView = firstKeyableView(in: contentContainer) else {
+            retryPromptFocusIfPossible(attemptsRemaining: attemptsRemaining)
+            return
+        }
+        let success = panel?.makeFirstResponder(keyView) ?? false
+        if !success {
+            retryPromptFocusIfPossible(attemptsRemaining: attemptsRemaining)
+        }
+    }
+
+    private func retryPromptFocusIfPossible(attemptsRemaining: Int) {
+        guard attemptsRemaining > 0 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.grabPromptFocus(attemptsRemaining: attemptsRemaining - 1)
         }
     }
 
