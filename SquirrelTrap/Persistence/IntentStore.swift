@@ -72,6 +72,19 @@ final class IntentStore: ObservableObject {
         entries.filter { $0.favorite }.sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// Derived from `entries` on every read rather than cached/persisted --
+    /// see ActivityStats.swift. Cheap at this app's scale, and since entries
+    /// themselves sync via iCloud, these are automatically correct across
+    /// every Mac you use without any dedicated sync logic of their own.
+    var currentStreak: Int { ActivityStats.streak(from: entries).current }
+    var longestStreak: Int { ActivityStats.streak(from: entries).longest }
+    var todayCompletedCount: Int {
+        entries.filter { $0.completed && ($0.completedAt.map { Calendar.current.isDateInToday($0) } ?? false) }.count
+    }
+    var last7DaysCompletionCounts: [(date: Date, count: Int)] {
+        ActivityStats.completionCounts(from: entries, lastDays: 7)
+    }
+
     @discardableResult
     func add(text: String) -> IntentEntry {
         let minRank = entries.first(where: { !$0.completed })?.sortRank ?? 0

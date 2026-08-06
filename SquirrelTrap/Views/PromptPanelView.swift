@@ -49,6 +49,7 @@ struct PromptPanelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+            activitySummary
 
             if let update = updateChecker.availableUpdate {
                 Link(destination: update.url) {
@@ -103,6 +104,22 @@ struct PromptPanelView: View {
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(Color.panelTextSecondary)
             .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    /// Quiet, always-visible -- no badges, no "you lost your streak" copy on
+    /// a reset. The streak text briefly highlights when viewModel.justExtendedStreak
+    /// fires (the one moment of celebration), then settles back on its own.
+    private var activitySummary: some View {
+        HStack(spacing: 4) {
+            let days = intentStore.currentStreak
+            Text("🔥 \(days) day\(days == 1 ? "" : "s")")
+                .foregroundStyle(viewModel.justExtendedStreak ? Color.accentColor : Color.panelTextSecondary)
+                .animation(.easeInOut, value: viewModel.justExtendedStreak)
+            Text("· best \(intentStore.longestStreak) · ✓ \(intentStore.todayCompletedCount) today")
+                .foregroundStyle(Color.panelTextSecondary)
+        }
+        .font(.system(size: 10))
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var footer: some View {

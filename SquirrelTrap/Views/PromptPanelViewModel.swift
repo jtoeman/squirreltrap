@@ -8,6 +8,10 @@ final class PromptPanelViewModel: ObservableObject {
     // Not persisted — only meaningful for the current panel session, set when a
     // reminder fires so the relevant row can call itself out visually.
     @Published var highlightedEntryID: UUID?
+    // Briefly true right when a submission extends the streak to a new day --
+    // drives a one-second highlight on the streak line, then clears itself.
+    // Not persisted; this is a transient celebration moment, not state.
+    @Published var justExtendedStreak = false
 
     let intentStore: IntentStore
     private let reminderScheduler: ReminderScheduler
@@ -63,7 +67,22 @@ final class PromptPanelViewModel: ObservableObject {
     /// each independent of the other's state.
     @discardableResult
     private func addEntryApplyingDefaultAlarm(text: String) -> IntentEntry {
+        // Checked before adding: is this the first submission of a new
+        // streak day? (Not "did the streak number change" -- simpler and
+        // exactly equivalent, since submitting is the only thing that can
+        // extend it.)
+        let today = Calendar.current.startOfDay(for: Date())
+        let isFirstOfDay = !intentStore.entries.contains { Calendar.current.isDate($0.createdAt, inSameDayAs: today) }
+
         let entry = intentStore.add(text: text)
+
+        if isFirstOfDay {
+            justExtendedStreak = true
+            Task {
+                try? await Task.sleep(for: .seconds(1))
+                justExtendedStreak = false
+            }
+        }
         if preferences.defaultAlarmEnabled {
             setReminder(for: entry.id, duration: preferences.defaultAlarmDurationSeconds)
         }
