@@ -8,6 +8,15 @@ struct PromptPanelView: View {
     @ObservedObject var updateChecker: UpdateChecker
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
+    // Celebration-animation state, driven by runCelebrationAnimation() below
+    // when viewModel.justExtendedStreak flips true -- see that function for
+    // the timeline. Purely visual, not persisted.
+    @State private var iconScale: CGFloat = 1.0
+    @State private var countScale: CGFloat = 1.0
+    @State private var rowScale: CGFloat = 1.0
+    @State private var rowOpacity: Double = 1.0
+    @State private var showPuff = false
+    @State private var puffOpacity: Double = 0.0
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
@@ -109,28 +118,95 @@ struct PromptPanelView: View {
     // Debug builds only -- see DebugBuildTag.swift.
     private var headerTitle: String {
         #if DEBUG
-        return "Squirrel Trap (\(debugBuildTag))"
+        return "Squirrel Trap \(debugNextVersion)\(debugBuildTag)"
         #else
         return "Squirrel Trap"
         #endif
     }
 
     /// Quiet, always-visible -- no badges, no "you lost your streak" copy on
-    /// a reset. The streak text pulses (scale + color) when
-    /// viewModel.justExtendedStreak fires (the one moment of celebration),
-    /// then settles back on its own.
+    /// a reset. When viewModel.justExtendedStreak fires, runCelebrationAnimation()
+    /// choreographs the one moment of celebration (icon pulse, count pulse, and
+    /// the row itself shrinking away behind a puff-cloud emoji and reforming) --
+    /// entirely within celebrationDuration -- then everything settles back on
+    /// its own.
     private var activitySummary: some View {
-        HStack(spacing: 4) {
-            let days = intentStore.currentStreak
-            Text("🔥 \(days) day\(days == 1 ? "" : "s")")
+        let days = intentStore.currentStreak
+        return HStack(spacing: 4) {
+            Text("🔥")
+                .scaleEffect(iconScale)
+            Text("\(days) day\(days == 1 ? "" : "s")")
                 .foregroundStyle(viewModel.justExtendedStreak ? Color.accentColor : Color.panelTextSecondary)
-                .scaleEffect(viewModel.justExtendedStreak ? 1.35 : 1.0)
-                .animation(.spring(response: 0.35, dampingFraction: 0.45), value: viewModel.justExtendedStreak)
-            Text("· ✓ \(intentStore.todayCompletedCount) today")
+            Text("· ✓")
+                .foregroundStyle(Color.panelTextSecondary)
+            Text("\(intentStore.todayCompletedCount)")
+                .foregroundStyle(Color.panelTextSecondary)
+                .scaleEffect(countScale)
+            Text("today")
                 .foregroundStyle(Color.panelTextSecondary)
         }
         .font(.system(size: 10))
         .frame(maxWidth: .infinity, alignment: .center)
+        .scaleEffect(rowScale)
+        .opacity(rowOpacity)
+        .overlay {
+            if showPuff {
+                Text("💨")
+                    .font(.system(size: 13))
+                    .opacity(puffOpacity)
+            }
+        }
+        .onChange(of: viewModel.justExtendedStreak) { _, newValue in
+            if newValue { runCelebrationAnimation() }
+        }
+    }
+
+    /// Every phase is timed as a fraction of celebrationDuration (see
+    /// Core/CelebrationTiming.swift -- the one knob to tweak for pacing), so
+    /// changing that value keeps everything finishing together: the icon and
+    /// today's-count number grow to 1.5x over the first half and shrink back
+    /// over the second; the row itself shrinks and fades out over the first
+    /// 40%, a puff cloud flashes in the middle 20%, then the row grows and
+    /// fades back in over the last 40%.
+    private func runCelebrationAnimation() {
+        let half = celebrationDuration / 2
+        withAnimation(.easeOut(duration: half)) {
+            iconScale = 1.5
+            countScale = 1.5
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + half) {
+            withAnimation(.easeIn(duration: half)) {
+                iconScale = 1.0
+                countScale = 1.0
+            }
+        }
+
+        let rowOutDuration = celebrationDuration * 0.4
+        let puffHold = celebrationDuration * 0.2
+        let rowInDuration = celebrationDuration - rowOutDuration - puffHold
+
+        withAnimation(.easeIn(duration: rowOutDuration)) {
+            rowScale = 0.01
+            rowOpacity = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + rowOutDuration) {
+            showPuff = true
+            withAnimation(.easeOut(duration: puffHold / 2)) {
+                puffOpacity = 1
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + puffHold / 2) {
+                withAnimation(.easeIn(duration: puffHold / 2)) {
+                    puffOpacity = 0
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + puffHold) {
+                showPuff = false
+                withAnimation(.easeOut(duration: rowInDuration)) {
+                    rowScale = 1.0
+                    rowOpacity = 1.0
+                }
+            }
+        }
     }
 
     private var footer: some View {

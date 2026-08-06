@@ -206,16 +206,32 @@ final class PanelController: NSObject {
         }()
         setContent(controller.view)
         present()
-        // Deferred a run-loop turn: setContent() just tore down whatever content
-        // was showing before (e.g. Preferences) and swapped this one in, and
-        // AppKit's responder chain hasn't necessarily settled from that yet --
-        // bumping focusToken synchronously here sometimes lost the focus grab
-        // silently when navigating back from Preferences while the panel stays
-        // open (as opposed to a fresh Cmd+Tab show, which has no prior content
-        // to tear down).
-        DispatchQueue.main.async { [weak self] in
-            self?.promptViewModel.focusToken = UUID()
+        // The SwiftUI-level @FocusState/focusToken mechanism (still bumped
+        // above via reset()) isn't reliable in this hand-rolled
+        // NSPanel/NSHostingController setup right after setContent() tears
+        // down whatever content was showing before (e.g. Preferences) and
+        // swaps this one in -- so grab focus directly at the AppKit level
+        // instead: find the actual NSTextView backing the SwiftUI TextField
+        // and make it first responder. A short delay gives SwiftUI's layout
+        // pass time to actually materialize that NSTextView after being
+        // reattached to the window.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self, let contentContainer = self.contentContainer,
+                  let textView = self.firstEditableTextView(in: contentContainer) else { return }
+            self.panel?.makeFirstResponder(textView)
         }
+    }
+
+    private func firstEditableTextView(in view: NSView) -> NSTextView? {
+        if let textView = view as? NSTextView, textView.isEditable {
+            return textView
+        }
+        for subview in view.subviews {
+            if let found = firstEditableTextView(in: subview) {
+                return found
+            }
+        }
+        return nil
     }
 
     func showPermissionRequestPanel() {

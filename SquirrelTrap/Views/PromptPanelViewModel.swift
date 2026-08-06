@@ -79,7 +79,7 @@ final class PromptPanelViewModel: ObservableObject {
         if isFirstOfDay, preferences.celebrationEnabled {
             justExtendedStreak = true
             Task {
-                try? await Task.sleep(for: .seconds(1))
+                try? await Task.sleep(for: .seconds(celebrationDuration))
                 justExtendedStreak = false
             }
         }
