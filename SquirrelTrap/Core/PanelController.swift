@@ -211,43 +211,25 @@ final class PanelController: NSObject {
         // NSPanel/NSHostingController setup right after setContent() tears
         // down whatever content was showing before (e.g. Preferences) and
         // swaps this one in -- so grab focus directly at the AppKit level
-        // instead: find the actual NSTextView backing the SwiftUI TextField
-        // and make it first responder. A short delay gives SwiftUI's layout
-        // pass time to actually materialize that NSTextView after being
-        // reattached to the window.
+        // instead. SwiftUI's macOS TextField backs onto a private
+        // "AppKitTextField" class, not NSTextView (confirmed via a full
+        // subview-tree dump), so this targets the first view anywhere in the
+        // tree with canBecomeKeyView == true -- that's reliably the text
+        // field, since it's laid out before the scrollable list/footer
+        // (whose buttons are the only other canBecomeKeyView views). A short
+        // delay gives SwiftUI's layout pass time to actually materialize it
+        // after being reattached to the window.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let self, let contentContainer = self.contentContainer else { return }
-            debugLog("Squirrel Trap DEBUG: [focusGrab] before: firstResponder=\(String(describing: self.panel?.firstResponder))\n")
-            debugLog("Squirrel Trap DEBUG: [focusGrab] view tree:\n\(self.dumpViewTree(contentContainer))")
-            guard let textView = self.firstEditableTextView(in: contentContainer) else {
-                debugLog("Squirrel Trap DEBUG: [focusGrab] no editable NSTextView found\n")
-                return
-            }
-            let success = self.panel?.makeFirstResponder(textView) ?? false
-            debugLog("Squirrel Trap DEBUG: [focusGrab] makeFirstResponder success=\(success), after firstResponder=\(String(describing: self.panel?.firstResponder))\n")
+            guard let self, let contentContainer = self.contentContainer,
+                  let keyView = self.firstKeyableView(in: contentContainer) else { return }
+            self.panel?.makeFirstResponder(keyView)
         }
     }
 
-    /// Diagnostic only -- dumps every subview's class name, frame, and
-    /// canBecomeKeyView so a real focus fix can target the actual view
-    /// class instead of guessing (SwiftUI's macOS TextField doesn't
-    /// necessarily back onto a plain NSTextView the way UIKit/AppKit text
-    /// fields classically do).
-    private func dumpViewTree(_ view: NSView, depth: Int = 0) -> String {
-        let indent = String(repeating: "  ", count: depth)
-        var result = "\(indent)\(type(of: view)) frame=\(view.frame) canBecomeKeyView=\(view.canBecomeKeyView)\n"
+    private func firstKeyableView(in view: NSView) -> NSView? {
+        if view.canBecomeKeyView { return view }
         for subview in view.subviews {
-            result += dumpViewTree(subview, depth: depth + 1)
-        }
-        return result
-    }
-
-    private func firstEditableTextView(in view: NSView) -> NSTextView? {
-        if let textView = view as? NSTextView, textView.isEditable {
-            return textView
-        }
-        for subview in view.subviews {
-            if let found = firstEditableTextView(in: subview) {
+            if let found = firstKeyableView(in: subview) {
                 return found
             }
         }
