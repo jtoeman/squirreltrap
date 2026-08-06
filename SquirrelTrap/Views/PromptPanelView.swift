@@ -9,7 +9,7 @@ struct PromptPanelView: View {
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
     // Celebration-animation state, driven by runCelebrationAnimation() below
-    // when viewModel.justExtendedStreak flips true -- see that function for
+    // when viewModel.isCelebrating flips true -- see that function for
     // the timeline. Purely visual, not persisted.
     @State private var iconScale: CGFloat = 1.0
     @State private var countScale: CGFloat = 1.0
@@ -125,18 +125,18 @@ struct PromptPanelView: View {
     }
 
     /// Quiet, always-visible -- no badges, no "you lost your streak" copy on
-    /// a reset. When viewModel.justExtendedStreak fires, runCelebrationAnimation()
-    /// choreographs the one moment of celebration (icon pulse, count pulse, and
-    /// the row itself shrinking away behind a puff-cloud emoji and reforming) --
-    /// entirely within celebrationDuration -- then everything settles back on
-    /// its own.
+    /// a reset. When viewModel.isCelebrating fires (every task completed, not
+    /// just streak-day extensions), runCelebrationAnimation() choreographs
+    /// the moment (icon pulse, count pulse, and the row itself shrinking
+    /// away behind a puff-cloud emoji and reforming) -- entirely within
+    /// celebrationDuration -- then everything settles back on its own.
     private var activitySummary: some View {
         let days = intentStore.currentStreak
         return HStack(spacing: 4) {
             Text("🔥")
                 .scaleEffect(iconScale)
             Text("\(days) day\(days == 1 ? "" : "s")")
-                .foregroundStyle(viewModel.justExtendedStreak ? Color.accentColor : Color.panelTextSecondary)
+                .foregroundStyle(viewModel.isCelebrating ? Color.accentColor : Color.panelTextSecondary)
             Text("· ✓")
                 .foregroundStyle(Color.panelTextSecondary)
             Text("\(intentStore.todayCompletedCount)")
@@ -156,7 +156,7 @@ struct PromptPanelView: View {
                     .opacity(puffOpacity)
             }
         }
-        .onChange(of: viewModel.justExtendedStreak) { _, newValue in
+        .onChange(of: viewModel.isCelebrating) { _, newValue in
             if newValue { runCelebrationAnimation() }
         }
     }
@@ -295,12 +295,7 @@ struct PromptPanelView: View {
                             PendingRowView(
                                 entry: entry,
                                 isHighlighted: entry.id == viewModel.highlightedEntryID,
-                                onToggleCompleted: {
-                                    intentStore.toggleCompleted(id: entry.id)
-                                    // Completing a task with an active alarm should silence it —
-                                    // there's nothing left to be reminded about.
-                                    if entry.reminderDate != nil { viewModel.cancelReminder(for: entry.id) }
-                                },
+                                onToggleCompleted: { viewModel.toggleCompleted(id: entry.id) },
                                 onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                 onSetReminder: { duration in viewModel.setReminder(for: entry.id, duration: duration) },
                                 onCancelReminder: { viewModel.cancelReminder(for: entry.id) },
@@ -335,7 +330,7 @@ struct PromptPanelView: View {
                             ForEach(completedEntries) { entry in
                                 IntentRowView(
                                     entry: entry,
-                                    onToggleCompleted: { intentStore.toggleCompleted(id: entry.id) },
+                                    onToggleCompleted: { viewModel.toggleCompleted(id: entry.id) },
                                     onToggleFavorite: { intentStore.toggleFavorite(id: entry.id) },
                                     onDelete: { intentStore.delete(id: entry.id) }
                                 )

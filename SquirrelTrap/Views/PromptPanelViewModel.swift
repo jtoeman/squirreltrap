@@ -8,10 +8,10 @@ final class PromptPanelViewModel: ObservableObject {
     // Not persisted — only meaningful for the current panel session, set when a
     // reminder fires so the relevant row can call itself out visually.
     @Published var highlightedEntryID: UUID?
-    // Briefly true right when a submission extends the streak to a new day --
-    // drives a one-second highlight on the streak line, then clears itself.
-    // Not persisted; this is a transient celebration moment, not state.
-    @Published var justExtendedStreak = false
+    // Briefly true right when any task is completed -- drives the celebration
+    // animation, then clears itself. Not persisted; a transient UI moment,
+    // not state.
+    @Published var isCelebrating = false
 
     let intentStore: IntentStore
     private let reminderScheduler: ReminderScheduler
@@ -32,6 +32,26 @@ final class PromptPanelViewModel: ObservableObject {
     func cancelReminder(for entryID: UUID) {
         intentStore.setReminder(id: entryID, date: nil)
         reminderScheduler.cancel(for: entryID)
+    }
+
+    /// Completing a task with an active alarm silences it -- there's nothing
+    /// left to be reminded about. Celebrates every completion (not gated by
+    /// streak/day logic); toggling a task back to incomplete never does.
+    func toggleCompleted(id: UUID) {
+        guard let entry = intentStore.entries.first(where: { $0.id == id }) else { return }
+        let isCompleting = !entry.completed
+        intentStore.toggleCompleted(id: id)
+        guard isCompleting else { return }
+        if entry.reminderDate != nil {
+            cancelReminder(for: id)
+        }
+        if preferences.celebrationEnabled {
+            isCelebrating = true
+            Task {
+                try? await Task.sleep(for: .seconds(celebrationDuration))
+                isCelebrating = false
+            }
+        }
     }
 
     /// Called every time the panel is about to be shown: clears the draft, bumps
@@ -67,22 +87,8 @@ final class PromptPanelViewModel: ObservableObject {
     /// each independent of the other's state.
     @discardableResult
     private func addEntryApplyingDefaultAlarm(text: String) -> IntentEntry {
-        // Checked before adding: is this the first submission of a new
-        // streak day? (Not "did the streak number change" -- simpler and
-        // exactly equivalent, since submitting is the only thing that can
-        // extend it.)
-        let today = Calendar.current.startOfDay(for: Date())
-        let isFirstOfDay = !intentStore.entries.contains { Calendar.current.isDate($0.createdAt, inSameDayAs: today) }
-
         let entry = intentStore.add(text: text)
 
-        if isFirstOfDay, preferences.celebrationEnabled {
-            justExtendedStreak = true
-            Task {
-                try? await Task.sleep(for: .seconds(celebrationDuration))
-                justExtendedStreak = false
-            }
-        }
         if preferences.defaultAlarmEnabled {
             setReminder(for: entry.id, duration: preferences.defaultAlarmDurationSeconds)
         }
@@ -94,14 +100,13 @@ final class PromptPanelViewModel: ObservableObject {
     }
 
     #if DEBUG
-    /// Re-fires the celebration on demand -- the real trigger only fires
-    /// once per calendar day, which makes tuning CelebrationTiming's
-    /// duration impractical without this.
+    /// Re-fires the celebration on demand, without needing to actually
+    /// complete a task.
     func previewCelebration() {
-        justExtendedStreak = true
+        isCelebrating = true
         Task {
             try? await Task.sleep(for: .seconds(celebrationDuration))
-            justExtendedStreak = false
+            isCelebrating = false
         }
     }
     #endif

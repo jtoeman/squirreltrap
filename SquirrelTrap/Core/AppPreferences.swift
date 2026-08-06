@@ -39,8 +39,8 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(translucencyEnabled, forKey: Keys.translucencyEnabled) }
     }
 
-    /// Gates the brief streak pulse when a submission extends the streak to
-    /// a new day -- see PromptPanelViewModel.justExtendedStreak.
+    /// Gates the brief celebration pulse fired on every task completion --
+    /// see PromptPanelViewModel.isCelebrating.
     @Published var celebrationEnabled: Bool {
         didSet { UserDefaults.standard.set(celebrationEnabled, forKey: Keys.celebrationEnabled) }
     }
