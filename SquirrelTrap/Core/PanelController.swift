@@ -216,10 +216,30 @@ final class PanelController: NSObject {
         // pass time to actually materialize that NSTextView after being
         // reattached to the window.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let self, let contentContainer = self.contentContainer,
-                  let textView = self.firstEditableTextView(in: contentContainer) else { return }
-            self.panel?.makeFirstResponder(textView)
+            guard let self, let contentContainer = self.contentContainer else { return }
+            debugLog("Squirrel Trap DEBUG: [focusGrab] before: firstResponder=\(String(describing: self.panel?.firstResponder))\n")
+            debugLog("Squirrel Trap DEBUG: [focusGrab] view tree:\n\(self.dumpViewTree(contentContainer))")
+            guard let textView = self.firstEditableTextView(in: contentContainer) else {
+                debugLog("Squirrel Trap DEBUG: [focusGrab] no editable NSTextView found\n")
+                return
+            }
+            let success = self.panel?.makeFirstResponder(textView) ?? false
+            debugLog("Squirrel Trap DEBUG: [focusGrab] makeFirstResponder success=\(success), after firstResponder=\(String(describing: self.panel?.firstResponder))\n")
         }
+    }
+
+    /// Diagnostic only -- dumps every subview's class name, frame, and
+    /// canBecomeKeyView so a real focus fix can target the actual view
+    /// class instead of guessing (SwiftUI's macOS TextField doesn't
+    /// necessarily back onto a plain NSTextView the way UIKit/AppKit text
+    /// fields classically do).
+    private func dumpViewTree(_ view: NSView, depth: Int = 0) -> String {
+        let indent = String(repeating: "  ", count: depth)
+        var result = "\(indent)\(type(of: view)) frame=\(view.frame) canBecomeKeyView=\(view.canBecomeKeyView)\n"
+        for subview in view.subviews {
+            result += dumpViewTree(subview, depth: depth + 1)
+        }
+        return result
     }
 
     private func firstEditableTextView(in view: NSView) -> NSTextView? {
