@@ -9,5 +9,5 @@ import Foundation
 /// letter to "a" whenever debugNextVersion changes. Never compiled into
 /// Release builds, so it can never leak into a shipped app.
 let debugNextVersion = "1.6"
-let debugBuildTag = "a"
+let debugBuildTag = "b"
 #endif

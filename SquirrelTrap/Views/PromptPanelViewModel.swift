@@ -92,4 +92,17 @@ final class PromptPanelViewModel: ObservableObject {
         }
         return entry
     }
+
+    #if DEBUG
+    /// Re-fires the celebration on demand -- the real trigger only fires
+    /// once per calendar day, which makes tuning CelebrationTiming's
+    /// duration impractical without this.
+    func previewCelebration() {
+        justExtendedStreak = true
+        Task {
+            try? await Task.sleep(for: .seconds(celebrationDuration))
+            justExtendedStreak = false
+        }
+    }
+    #endif
 }

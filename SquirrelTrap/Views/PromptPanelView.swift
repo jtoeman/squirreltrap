@@ -229,6 +229,22 @@ struct PromptPanelView: View {
             SnoozeButton(minutes: preferences.snoozeDurationMinutes, action: onSnooze)
                 .help("Snooze Cmd+Tab for a while")
 
+            #if DEBUG
+            // Debug-only: the real celebration only fires once per calendar
+            // day, which makes tuning CelebrationTiming's duration
+            // impractical without a way to re-fire it on demand.
+            Button {
+                viewModel.previewCelebration()
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .help("Preview celebration (debug only)")
+            .accessibilityLabel("Preview celebration")
+            #endif
+
             Spacer()
 
             KofiButton(onOpened: onDismiss)

@@ -665,6 +665,18 @@ final class PanelController: NSObject {
     /// overlay underneath survives content swaps instead of being wiped each time.
     private func setContent(_ hostingView: NSView) {
         guard let contentContainer else { return }
+        // Cleanly resign first responder before yanking the outgoing content
+        // view out of the hierarchy -- removeFromSuperview() alone doesn't
+        // go through normal AppKit resignation, which left SwiftUI's
+        // FocusState believing the text field was still focused after the
+        // FIRST Prompt -> Preferences -> Prompt round trip. That stale true
+        // silently broke the direct makeFirstResponder focus grab (see
+        // showPromptPanel) on every round trip after the first, since there
+        // was no false -> true transition left for anything to react to.
+        if let currentHostingView, let firstResponder = panel?.firstResponder as? NSView,
+           firstResponder.isDescendant(of: currentHostingView) {
+            panel?.makeFirstResponder(nil)
+        }
         currentHostingView?.removeFromSuperview()
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = .clear
