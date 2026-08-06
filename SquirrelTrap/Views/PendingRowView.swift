@@ -16,13 +16,19 @@ struct PendingRowView: View {
     var onDragHandleHoverChanged: (Bool) -> Void = { _ in }
 
     @State private var isDropTargeted = false
+    // Completion-animation state -- see startCompletionAnimation(). Purely
+    // visual, not persisted.
+    @State private var rowScale: CGFloat = 1.0
+    @State private var rowOpacity: Double = 1.0
+    @State private var showPuff = false
+    @State private var puffOpacity: Double = 0.0
 
     var body: some View {
         HStack(spacing: 6) {
             IntentRowView(
                 entry: entry,
                 isHighlighted: isHighlighted || isDropTargeted,
-                onToggleCompleted: onToggleCompleted,
+                onToggleCompleted: startCompletionAnimation,
                 onToggleFavorite: onToggleFavorite,
                 onSetReminder: onSetReminder,
                 onCancelReminder: onCancelReminder,
@@ -59,12 +65,54 @@ struct PendingRowView: View {
                     .glassCard()
                 }
         }
+        .scaleEffect(rowScale)
+        .opacity(rowOpacity)
+        .overlay {
+            if showPuff {
+                Text("💨")
+                    .font(.system(size: 16))
+                    .opacity(puffOpacity)
+            }
+        }
         .dropDestination(for: String.self) { items, _ in
             guard let draggedIDString = items.first, let draggedID = UUID(uuidString: draggedIDString) else { return false }
             onDrop(draggedID)
             return true
         } isTargeted: { targeted in
             isDropTargeted = targeted
+        }
+    }
+
+    /// Plays the shrink/fade-out + puff-cloud animation in place, then calls
+    /// the real onToggleCompleted() only once the row is fully invisible --
+    /// this entry then moves from the pending list to the completed one, but
+    /// since there's nothing left on screen to jump, that structural move is
+    /// never actually visible. Timed as a fraction of celebrationDuration
+    /// (Core/CelebrationTiming.swift), the same knob the main panel's icon
+    /// pulse uses, so both halves of the celebration stay in the same
+    /// ballpark even though this row's animation runs first and completes
+    /// before that pulse begins.
+    private func startCompletionAnimation() {
+        let outDuration = celebrationDuration * 0.6
+        let puffDuration = celebrationDuration * 0.4
+
+        withAnimation(.easeIn(duration: outDuration)) {
+            rowScale = 0.01
+            rowOpacity = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + outDuration) {
+            showPuff = true
+            withAnimation(.easeOut(duration: puffDuration * 0.4)) {
+                puffOpacity = 1
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + puffDuration * 0.4) {
+                withAnimation(.easeIn(duration: puffDuration * 0.6)) {
+                    puffOpacity = 0
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + puffDuration) {
+                onToggleCompleted()
+            }
         }
     }
 }

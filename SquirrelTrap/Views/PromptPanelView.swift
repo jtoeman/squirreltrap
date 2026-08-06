@@ -10,13 +10,11 @@ struct PromptPanelView: View {
     @State private var isEndDropTargeted = false
     // Celebration-animation state, driven by runCelebrationAnimation() below
     // when viewModel.isCelebrating flips true -- see that function for
-    // the timeline. Purely visual, not persisted.
+    // the timeline. Purely visual, not persisted. The row-shrink/puff-cloud
+    // half of the celebration lives on the individual to-do row instead --
+    // see PendingRowView.startCompletionAnimation.
     @State private var iconScale: CGFloat = 1.0
     @State private var countScale: CGFloat = 1.0
-    @State private var rowScale: CGFloat = 1.0
-    @State private var rowOpacity: Double = 1.0
-    @State private var showPuff = false
-    @State private var puffOpacity: Double = 0.0
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
@@ -126,10 +124,11 @@ struct PromptPanelView: View {
 
     /// Quiet, always-visible -- no badges, no "you lost your streak" copy on
     /// a reset. When viewModel.isCelebrating fires (every task completed, not
-    /// just streak-day extensions), runCelebrationAnimation() choreographs
-    /// the moment (icon pulse, count pulse, and the row itself shrinking
-    /// away behind a puff-cloud emoji and reforming) -- entirely within
-    /// celebrationDuration -- then everything settles back on its own.
+    /// just streak-day extensions), runCelebrationAnimation() pulses the
+    /// icon and today's-count number to 1.5x and back, entirely within
+    /// celebrationDuration, then everything settles back on its own. The
+    /// shrink/puff-cloud half of the celebration lives on the individual
+    /// to-do row instead -- see PendingRowView.startCompletionAnimation.
     private var activitySummary: some View {
         let days = intentStore.currentStreak
         return HStack(spacing: 4) {
@@ -147,27 +146,15 @@ struct PromptPanelView: View {
         }
         .font(.system(size: 10))
         .frame(maxWidth: .infinity, alignment: .center)
-        .scaleEffect(rowScale)
-        .opacity(rowOpacity)
-        .overlay {
-            if showPuff {
-                Text("💨")
-                    .font(.system(size: 13))
-                    .opacity(puffOpacity)
-            }
-        }
         .onChange(of: viewModel.isCelebrating) { _, newValue in
             if newValue { runCelebrationAnimation() }
         }
     }
 
-    /// Every phase is timed as a fraction of celebrationDuration (see
-    /// Core/CelebrationTiming.swift -- the one knob to tweak for pacing), so
-    /// changing that value keeps everything finishing together: the icon and
-    /// today's-count number grow to 1.5x over the first half and shrink back
-    /// over the second; the row itself shrinks and fades out over the first
-    /// 40%, a puff cloud flashes in the middle 20%, then the row grows and
-    /// fades back in over the last 40%.
+    /// Timed as a fraction of celebrationDuration (see
+    /// Core/CelebrationTiming.swift -- the one knob to tweak for pacing): the
+    /// icon and today's-count number grow to 1.5x over the first half and
+    /// shrink back over the second.
     private func runCelebrationAnimation() {
         let half = celebrationDuration / 2
         withAnimation(.easeOut(duration: half)) {
@@ -178,33 +165,6 @@ struct PromptPanelView: View {
             withAnimation(.easeIn(duration: half)) {
                 iconScale = 1.0
                 countScale = 1.0
-            }
-        }
-
-        let rowOutDuration = celebrationDuration * 0.4
-        let puffHold = celebrationDuration * 0.2
-        let rowInDuration = celebrationDuration - rowOutDuration - puffHold
-
-        withAnimation(.easeIn(duration: rowOutDuration)) {
-            rowScale = 0.01
-            rowOpacity = 0
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + rowOutDuration) {
-            showPuff = true
-            withAnimation(.easeOut(duration: puffHold / 2)) {
-                puffOpacity = 1
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + puffHold / 2) {
-                withAnimation(.easeIn(duration: puffHold / 2)) {
-                    puffOpacity = 0
-                }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + puffHold) {
-                showPuff = false
-                withAnimation(.easeOut(duration: rowInDuration)) {
-                    rowScale = 1.0
-                    rowOpacity = 1.0
-                }
             }
         }
     }
