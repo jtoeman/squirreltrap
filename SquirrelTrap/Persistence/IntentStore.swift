@@ -76,8 +76,7 @@ final class IntentStore: ObservableObject {
     /// see ActivityStats.swift. Cheap at this app's scale, and since entries
     /// themselves sync via iCloud, these are automatically correct across
     /// every Mac you use without any dedicated sync logic of their own.
-    var currentStreak: Int { ActivityStats.streak(from: entries).current }
-    var longestStreak: Int { ActivityStats.streak(from: entries).longest }
+    var currentStreak: Int { ActivityStats.currentStreak(from: entries) }
     var todayCompletedCount: Int {
         entries.filter { $0.completed && ($0.completedAt.map { Calendar.current.isDateInToday($0) } ?? false) }.count
     }

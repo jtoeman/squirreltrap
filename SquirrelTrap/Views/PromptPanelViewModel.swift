@@ -76,7 +76,7 @@ final class PromptPanelViewModel: ObservableObject {
 
         let entry = intentStore.add(text: text)
 
-        if isFirstOfDay {
+        if isFirstOfDay, preferences.celebrationEnabled {
             justExtendedStreak = true
             Task {
                 try? await Task.sleep(for: .seconds(1))

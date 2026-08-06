@@ -8,15 +8,9 @@ import Foundation
 struct ActivityStats {
     /// One skipped day pauses the streak without resetting it; two
     /// consecutive skipped days reset it. Walks backward from today.
-    static func streak(from entries: [IntentEntry], calendar: Calendar = .current) -> (current: Int, longest: Int) {
+    static func currentStreak(from entries: [IntentEntry], calendar: Calendar = .current) -> Int {
         let activeDays = Set(entries.map { calendar.startOfDay(for: $0.createdAt) })
-        let current = currentStreak(activeDays: activeDays, today: calendar.startOfDay(for: Date()), calendar: calendar)
-        let longest = longestStreak(activeDays: activeDays, calendar: calendar)
-        return (current, longest)
-    }
-
-    private static func currentStreak(activeDays: Set<Date>, today: Date, calendar: Calendar) -> Int {
-        var day = today
+        var day = calendar.startOfDay(for: Date())
         var streak = 0
         var graceRemaining = 1
         while true {
@@ -30,36 +24,6 @@ struct ActivityStats {
             day = calendar.date(byAdding: .day, value: -1, to: day)!
         }
         return streak
-    }
-
-    /// Same one-grace-per-run rule, scanning every run across the whole
-    /// history chronologically; grace resets when a run actually breaks.
-    private static func longestStreak(activeDays: Set<Date>, calendar: Calendar) -> Int {
-        guard !activeDays.isEmpty else { return 0 }
-        let sorted = activeDays.sorted()
-        var longest = 0
-        var current = 0
-        var graceRemaining = 1
-        var previous: Date?
-        for day in sorted {
-            if let previous {
-                let gapDays = calendar.dateComponents([.day], from: previous, to: day).day ?? 0
-                if gapDays == 1 {
-                    current += 1
-                } else if gapDays == 2, graceRemaining > 0 {
-                    graceRemaining -= 1
-                    current += 1
-                } else {
-                    current = 1
-                    graceRemaining = 1
-                }
-            } else {
-                current = 1
-            }
-            longest = max(longest, current)
-            previous = day
-        }
-        return longest
     }
 
     /// Zero-filled, oldest to newest, one entry per calendar day.

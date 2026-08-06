@@ -39,6 +39,12 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(translucencyEnabled, forKey: Keys.translucencyEnabled) }
     }
 
+    /// Gates the brief streak pulse when a submission extends the streak to
+    /// a new day -- see PromptPanelViewModel.justExtendedStreak.
+    @Published var celebrationEnabled: Bool {
+        didSet { UserDefaults.standard.set(celebrationEnabled, forKey: Keys.celebrationEnabled) }
+    }
+
     @Published var reminderSyncDirection: ReminderSyncDirection {
         didSet { UserDefaults.standard.set(reminderSyncDirection.rawValue, forKey: Keys.reminderSyncDirection) }
     }
@@ -141,6 +147,7 @@ final class AppPreferences: ObservableObject {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let inactivityTimeout = "inactivityTimeout"
         static let translucencyEnabled = "translucencyEnabled"
+        static let celebrationEnabled = "celebrationEnabled"
         static let reminderSyncDirection = "reminderSyncDirection"
         static let reminderSyncEveryNInvocations = "reminderSyncEveryNInvocations"
         static let reminderSyncListIdentifier = "reminderSyncListIdentifier"
@@ -175,6 +182,12 @@ final class AppPreferences: ObservableObject {
             translucencyEnabled = true
         } else {
             translucencyEnabled = UserDefaults.standard.bool(forKey: Keys.translucencyEnabled)
+        }
+
+        if UserDefaults.standard.object(forKey: Keys.celebrationEnabled) == nil {
+            celebrationEnabled = true
+        } else {
+            celebrationEnabled = UserDefaults.standard.bool(forKey: Keys.celebrationEnabled)
         }
 
         if let rawValue = UserDefaults.standard.string(forKey: Keys.reminderSyncDirection),

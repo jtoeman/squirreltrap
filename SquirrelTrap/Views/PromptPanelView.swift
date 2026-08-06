@@ -107,15 +107,17 @@ struct PromptPanelView: View {
     }
 
     /// Quiet, always-visible -- no badges, no "you lost your streak" copy on
-    /// a reset. The streak text briefly highlights when viewModel.justExtendedStreak
-    /// fires (the one moment of celebration), then settles back on its own.
+    /// a reset. The streak text pulses (scale + color) when
+    /// viewModel.justExtendedStreak fires (the one moment of celebration),
+    /// then settles back on its own.
     private var activitySummary: some View {
         HStack(spacing: 4) {
             let days = intentStore.currentStreak
             Text("🔥 \(days) day\(days == 1 ? "" : "s")")
                 .foregroundStyle(viewModel.justExtendedStreak ? Color.accentColor : Color.panelTextSecondary)
-                .animation(.easeInOut, value: viewModel.justExtendedStreak)
-            Text("· best \(intentStore.longestStreak) · ✓ \(intentStore.todayCompletedCount) today")
+                .scaleEffect(viewModel.justExtendedStreak ? 1.35 : 1.0)
+                .animation(.spring(response: 0.35, dampingFraction: 0.45), value: viewModel.justExtendedStreak)
+            Text("· ✓ \(intentStore.todayCompletedCount) today")
                 .foregroundStyle(Color.panelTextSecondary)
         }
         .font(.system(size: 10))

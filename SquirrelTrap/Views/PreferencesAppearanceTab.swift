@@ -25,6 +25,15 @@ struct PreferencesAppearanceTab: View {
             }
 
             GridRow {
+                Text("Show Celebration")
+                    .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
+                Toggle("", isOn: $preferences.celebrationEnabled)
+                    .labelsHidden()
+                    .help("Briefly pulses the streak count when you log the first to-do of a new day")
+            }
+
+            GridRow {
                 Text("")
                 permissionStatus
             }

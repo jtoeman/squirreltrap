@@ -4,10 +4,15 @@ import SwiftUI
 struct PreferencesActivityTab: View {
     let intentStore: IntentStore
 
-    private var dayFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter
+    private var days: [(date: Date, count: Int)] { intentStore.last7DaysCompletionCounts }
+
+    private var maxInASingleDay: Int {
+        days.map(\.count).max() ?? 0
+    }
+
+    private var averagePerDay: Double {
+        guard !days.isEmpty else { return 0 }
+        return Double(days.reduce(0) { $0 + $1.count }) / Double(days.count)
     }
 
     var body: some View {
@@ -16,9 +21,13 @@ struct PreferencesActivityTab: View {
                 .font(.system(size: 12))
                 .foregroundStyle(Color.panelTextSecondary)
 
-            Chart(intentStore.last7DaysCompletionCounts, id: \.date) { day in
+            // The x-axis uses the actual Date (not a pre-formatted day-name
+            // string) so Swift Charts orders bars chronologically -- a
+            // categorical String axis sorts alphabetically instead (e.g. Fri
+            // before Mon), which scrambled real data out of date order.
+            Chart(days, id: \.date) { day in
                 BarMark(
-                    x: .value("Day", dayFormatter.string(from: day.date)),
+                    x: .value("Day", day.date, unit: .day),
                     y: .value("Completed", day.count)
                 )
                 .foregroundStyle(Color.accentColor)
@@ -32,13 +41,31 @@ struct PreferencesActivityTab: View {
             }
             .chartYAxis(.hidden)
             .chartXAxis {
-                AxisMarks { _ in
-                    AxisValueLabel()
+                AxisMarks(values: .stride(by: .day)) { _ in
+                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
                         .font(.system(size: 10))
                         .foregroundStyle(Color.panelTextSecondary)
                 }
             }
             .frame(height: 160)
+
+            Divider()
+
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
+                GridRow {
+                    Text("Most Tasks In a Single Day")
+                        .foregroundStyle(Color.panelTextSecondary)
+                    Text("\(maxInASingleDay)")
+                        .foregroundStyle(Color.panelTextPrimary)
+                }
+                GridRow {
+                    Text("Average Tasks / Day")
+                        .foregroundStyle(Color.panelTextSecondary)
+                    Text(averagePerDay.formatted(.number.precision(.fractionLength(1))))
+                        .foregroundStyle(Color.panelTextPrimary)
+                }
+            }
+            .font(.system(size: 12))
         }
     }
 }
