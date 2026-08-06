@@ -206,7 +206,16 @@ final class PanelController: NSObject {
         }()
         setContent(controller.view)
         present()
-        promptViewModel.focusToken = UUID()
+        // Deferred a run-loop turn: setContent() just tore down whatever content
+        // was showing before (e.g. Preferences) and swapped this one in, and
+        // AppKit's responder chain hasn't necessarily settled from that yet --
+        // bumping focusToken synchronously here sometimes lost the focus grab
+        // silently when navigating back from Preferences while the panel stays
+        // open (as opposed to a fresh Cmd+Tab show, which has no prior content
+        // to tear down).
+        DispatchQueue.main.async { [weak self] in
+            self?.promptViewModel.focusToken = UUID()
+        }
     }
 
     func showPermissionRequestPanel() {
