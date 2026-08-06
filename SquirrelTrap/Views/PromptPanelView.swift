@@ -100,10 +100,19 @@ struct PromptPanelView: View {
     }
 
     private var header: some View {
-        Text("Squirrel Trap")
+        Text(headerTitle)
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(Color.panelTextSecondary)
             .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    // Debug builds only -- see DebugBuildTag.swift.
+    private var headerTitle: String {
+        #if DEBUG
+        return "Squirrel Trap (\(debugBuildTag))"
+        #else
+        return "Squirrel Trap"
+        #endif
     }
 
     /// Quiet, always-visible -- no badges, no "you lost your streak" copy on

@@ -40,6 +40,7 @@
 		5FA1B2C3D4E5F607080900C1 /* TodoColorTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090037 /* TodoColorTag.swift */; };
 		5FA1B2C3D4E5F607080900C2 /* ActivityStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090038 /* ActivityStats.swift */; };
 		5FA1B2C3D4E5F607080900C3 /* PreferencesActivityTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090039 /* PreferencesActivityTab.swift */; };
+		5FA1B2C3D4E5F607080900C4 /* DebugBuildTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809003A /* DebugBuildTag.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +76,7 @@
 		5FA1B2C3D4E5F60708090037 /* TodoColorTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoColorTag.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090038 /* ActivityStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityStats.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090039 /* PreferencesActivityTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesActivityTab.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F6070809003A /* DebugBuildTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBuildTag.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090025 /* SnoozeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnoozeButton.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090026 /* CloudSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncEngine.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090030 /* SquirrelTrap-Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SquirrelTrap-Release.entitlements"; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 				5FA1B2C3D4E5F60708090031 /* DebugLog.swift */,
 				5FA1B2C3D4E5F60708090032 /* UpdateChecker.swift */,
 				5FA1B2C3D4E5F60708090038 /* ActivityStats.swift */,
+				5FA1B2C3D4E5F6070809003A /* DebugBuildTag.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -277,6 +280,7 @@
 				5FA1B2C3D4E5F607080900C1 /* TodoColorTag.swift in Sources */,
 				5FA1B2C3D4E5F607080900C2 /* ActivityStats.swift in Sources */,
 				5FA1B2C3D4E5F607080900C3 /* PreferencesActivityTab.swift in Sources */,
+				5FA1B2C3D4E5F607080900C4 /* DebugBuildTag.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
