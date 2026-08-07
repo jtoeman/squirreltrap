@@ -232,17 +232,22 @@ final class PanelController: NSObject {
 
     private func grabPromptFocus(attemptsRemaining: Int) {
         guard let contentContainer, let keyView = firstKeyableView(in: contentContainer) else {
+            debugLog("Squirrel Trap DEBUG: [grabPromptFocus] no keyable view yet, attemptsRemaining=\(attemptsRemaining)\n")
             retryPromptFocusIfPossible(attemptsRemaining: attemptsRemaining)
             return
         }
         let success = panel?.makeFirstResponder(keyView) ?? false
+        debugLog("Squirrel Trap DEBUG: [grabPromptFocus] makeFirstResponder success=\(success), attemptsRemaining=\(attemptsRemaining)\n")
         if !success {
             retryPromptFocusIfPossible(attemptsRemaining: attemptsRemaining)
         }
     }
 
     private func retryPromptFocusIfPossible(attemptsRemaining: Int) {
-        guard attemptsRemaining > 0 else { return }
+        guard attemptsRemaining > 0 else {
+            debugLog("Squirrel Trap DEBUG: [grabPromptFocus] gave up, no attempts remaining\n")
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             self?.grabPromptFocus(attemptsRemaining: attemptsRemaining - 1)
         }
@@ -333,6 +338,18 @@ final class PanelController: NSObject {
         debugLog("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] reclaiming key focus\n")
         panel.makeKeyAndOrderFront(nil)
         debugLog("Squirrel Trap DEBUG: [reclaimKeyFocusIfVisible] after makeKeyAndOrderFront: isKeyWindow=\(panel.isKeyWindow), NSApp.isActive=\(NSApp.isActive)\n")
+        // This makeKeyAndOrderFront is a SEPARATE key-window grab from the one
+        // showPromptPanel() already scheduled -- some other app briefly
+        // reactivating right after we present (observed in practice: Cmd+Tab
+        // gesture fires, our panel becomes key, then another app's own
+        // didActivateApplication notification lands and this method runs)
+        // can race against or outright undo that first attempt. If the
+        // prompt content is what's actually showing, re-run the same
+        // retrying focus grab here too rather than assuming the earlier one
+        // already won the race.
+        if currentHostingView === promptHostingController?.view {
+            grabPromptFocus(attemptsRemaining: 8)
+        }
     }
 
     /// Clicking into whatever app you switched to should dismiss the panel — but that
