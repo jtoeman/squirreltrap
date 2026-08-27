@@ -16,6 +16,12 @@ enum AnalyticsEvent: String {
     case coachTipShown = "Coach Tip Shown"
     case coachTipDismissed = "Coach Tip Dismissed"
     case preferencesTabOpened = "Preferences Tab Opened"
+    /// Sent at most once per calendar day the app is running, regardless of
+    /// any user interaction -- see AppDelegate.sendHeartbeatIfDue(). Exists
+    /// specifically to tell apart "installed but not touching it" from
+    /// "actually uninstalled": both look identical (total silence) without
+    /// this, since macOS has no uninstall hook to observe directly.
+    case dailyHeartbeat = "Daily Heartbeat"
 }
 
 /// Thin wrapper around the Amplitude client, gated entirely by

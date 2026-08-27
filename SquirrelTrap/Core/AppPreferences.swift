@@ -131,6 +131,13 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(lastReminderSyncAt, forKey: Keys.lastReminderSyncAt) }
     }
 
+    /// The last calendar day a "Daily Heartbeat" analytics event was sent —
+    /// see AnalyticsService/AppDelegate.sendHeartbeatIfDue(). Local-only,
+    /// deliberately not synced: it's a per-device fact, not app data.
+    @Published var lastHeartbeatSentAt: Date? {
+        didSet { UserDefaults.standard.set(lastHeartbeatSentAt, forKey: Keys.lastHeartbeatSentAt) }
+    }
+
     /// Non-nil while Cmd+Tab is suppressed — the menu bar icon and Cmd+,
     /// still work as usual and clicking the menu bar icon cancels it early.
     @Published var snoozeUntil: Date? {
@@ -239,6 +246,7 @@ final class AppPreferences: ObservableObject {
         static let reminderSyncEveryNInvocations = "reminderSyncEveryNInvocations"
         static let reminderSyncListIdentifier = "reminderSyncListIdentifier"
         static let lastReminderSyncAt = "lastReminderSyncAt"
+        static let lastHeartbeatSentAt = "lastHeartbeatSentAt"
         static let snoozeUntil = "snoozeUntil"
         static let snoozeDurationMinutes = "snoozeDurationMinutes"
         static let autoSnoozeAfterEntry = "autoSnoozeAfterEntry"
@@ -343,6 +351,7 @@ final class AppPreferences: ObservableObject {
 
         reminderSyncListIdentifier = UserDefaults.standard.string(forKey: Keys.reminderSyncListIdentifier)
         lastReminderSyncAt = UserDefaults.standard.object(forKey: Keys.lastReminderSyncAt) as? Date
+        lastHeartbeatSentAt = UserDefaults.standard.object(forKey: Keys.lastHeartbeatSentAt) as? Date
 
         snoozeUntil = UserDefaults.standard.object(forKey: Keys.snoozeUntil) as? Date
 

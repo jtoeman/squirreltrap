@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let monitor = AppSwitchMonitor()
     private let preferencesHotkey = PreferencesHotkeyMonitor()
     private var permissionPollTimer: Timer?
+    private var heartbeatTimer: Timer?
     private var statusItem: NSStatusItem?
     private var cancellables = Set<AnyCancellable>()
     private var isPanelVisible = false
@@ -85,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 debugLog("Squirrel Trap DEBUG: [onSwitchGestureDetected] snoozed, suppressing show\n")
                 return
             }
-            self.panelController.showPromptPanel()
+            self.panelController.showPromptPanel(viaSwitchGesture: true)
         }
         panelController.isSwitchGestureActive = { [weak monitor] in
             monitor?.switchDetectedDuringCurrentHold ?? false
@@ -147,6 +148,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // any earlier in launch would always be silently dropped, even for a
         // returning user who already granted consent last session.
         AnalyticsService.shared.track(.appLaunched)
+        // A menu-bar app with launch-at-login can run for weeks between real
+        // relaunches, so "check once at launch" alone would miss every day
+        // after the first -- the hourly re-check is what actually catches
+        // the day rolling over for a long-lived session.
+        sendHeartbeatIfDue()
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.sendHeartbeatIfDue() }
+        }
         preferences.$analyticsEnabled
             .sink { enabled in AnalyticsService.shared.updateConsent(enabled: enabled) }
             .store(in: &cancellables)
@@ -218,6 +227,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refreshAnalyticsUserProperties() {
         AnalyticsService.shared.updateUserProperties(preferences: preferences)
+    }
+
+    /// Sends the Daily Heartbeat event at most once per calendar day,
+    /// entirely regardless of user interaction -- see AnalyticsEvent's doc
+    /// comment for why this exists. Gated the normal way: AnalyticsService's
+    /// consent opt-out already suppresses this along with everything else,
+    /// so no separate check is needed here.
+    private func sendHeartbeatIfDue() {
+        if let last = preferences.lastHeartbeatSentAt, Calendar.current.isDateInToday(last) {
+            return
+        }
+        preferences.lastHeartbeatSentAt = Date()
+        AnalyticsService.shared.track(.dailyHeartbeat, properties: [
+            "current_streak": intentStore.currentStreak,
+            "completed_today": intentStore.todayCompletedCount
+        ])
     }
 
     private func publishWidgetSnapshot() {
