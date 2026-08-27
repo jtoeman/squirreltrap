@@ -123,11 +123,25 @@ final class CloudSyncEngine: ObservableObject {
             return
         }
         await ensureSubscriptionExists()
-        await pull()
-        await push()
+        let pullResult = await pull()
+        let sentCount = await push()
+
+        var summaryParts: [String] = []
+        if sentCount > 0 { summaryParts.append("\(sentCount) sent") }
+        if pullResult.added > 0 { summaryParts.append("\(pullResult.added) added") }
+        if pullResult.completed > 0 { summaryParts.append("\(pullResult.completed) completed") }
+        if pullResult.removed > 0 { summaryParts.append("\(pullResult.removed) removed") }
+        lastSyncSummary = summaryParts.isEmpty ? "No changes" : summaryParts.joined(separator: ", ")
     }
 
-    private func pull() async {
+    private struct PullResult {
+        var added = 0
+        var completed = 0
+        var removed = 0
+    }
+
+    @discardableResult
+    private func pull() async -> PullResult {
         let config = CKFetchRecordZoneChangesOperation.ZoneConfiguration()
         config.previousServerChangeToken = preferences.cloudChangeToken
         let operation = CKFetchRecordZoneChangesOperation(recordZoneIDs: [zoneID], configurationsByRecordZoneID: [zoneID: config])
@@ -220,13 +234,8 @@ final class CloudSyncEngine: ObservableObject {
             intentStore.resortPendingBySortRank()
         }
 
-        var summaryParts: [String] = []
-        if addedCount > 0 { summaryParts.append("\(addedCount) added") }
-        if completedCount > 0 { summaryParts.append("\(completedCount) completed") }
-        if !deletedIDs.isEmpty { summaryParts.append("\(deletedIDs.count) removed") }
-        lastSyncSummary = summaryParts.isEmpty ? "No changes" : summaryParts.joined(separator: ", ")
-
         debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pulled \(changedRecords.count) changed, \(deletedIDs.count) deleted\n")
+        return PullResult(added: addedCount, completed: completedCount, removed: deletedIDs.count)
     }
 
     private enum PullOutcome {
@@ -292,7 +301,11 @@ final class CloudSyncEngine: ObservableObject {
     /// matter how transient) silently and *permanently* excluded every item
     /// in that batch from ever being retried, since their lastModifiedAt was
     /// now stuck behind an already-advanced timestamp.
-    private func push() async {
+    /// Returns how many entries were actually sent (0 if there was nothing to
+    /// push, or if the push failed) -- rolled into the sync report alongside
+    /// pull()'s tally.
+    @discardableResult
+    private func push() async -> Int {
         let lastSync = preferences.lastCloudSyncAt ?? .distantPast
         let toSave = intentStore.entries
             .filter { $0.lastModifiedAt > lastSync }
@@ -302,7 +315,7 @@ final class CloudSyncEngine: ObservableObject {
 
         guard !toSave.isEmpty || !toDelete.isEmpty else {
             preferences.lastCloudSyncAt = Date()
-            return
+            return 0
         }
 
         let operation = CKModifyRecordsOperation(recordsToSave: toSave, recordIDsToDelete: toDelete)
@@ -329,6 +342,7 @@ final class CloudSyncEngine: ObservableObject {
             lastSyncError = "iCloud sync couldn't save your changes: \(pushError.localizedDescription)"
         }
         debugLog("Squirrel Trap DEBUG: [CloudSyncEngine] pushed \(toSave.count) saved, \(toDelete.count) deleted, succeeded=\(succeeded)\n")
+        return succeeded ? toSave.count : 0
     }
 
     private func makeRecord(for entry: IntentEntry) -> CKRecord {
