@@ -8,6 +8,7 @@ struct PromptPanelView: View {
     @ObservedObject var updateChecker: UpdateChecker
     @FocusState private var isInputFocused: Bool
     @State private var isEndDropTargeted = false
+    @State private var showingClearCompletedConfirm = false
     // Celebration-animation state, driven by runCelebrationAnimation() below
     // when viewModel.isCelebrating flips true -- see that function for
     // the timeline. Purely visual, not persisted. The row-shrink/puff-cloud
@@ -412,10 +413,31 @@ struct PromptPanelView: View {
                         }
 
                         if !completedEntries.isEmpty {
-                            Text("Completed")
+                            HStack {
+                                Text("Completed")
+                                    .font(.caption)
+                                    .foregroundStyle(Color.panelTextSecondary)
+
+                                Spacer()
+
+                                Button("clear all") {
+                                    showingClearCompletedConfirm = true
+                                }
+                                .buttonStyle(.plain)
                                 .font(.caption)
                                 .foregroundStyle(Color.panelTextSecondary)
-                                .padding(.top, pendingEntries.isEmpty ? 0 : 4)
+                                .confirmationDialog(
+                                    "Delete all completed items? This can't be undone.",
+                                    isPresented: $showingClearCompletedConfirm,
+                                    titleVisibility: .visible
+                                ) {
+                                    Button("Delete Completed", role: .destructive) {
+                                        viewModel.clearCompletedEntries()
+                                    }
+                                    Button("Cancel", role: .cancel) {}
+                                }
+                            }
+                            .padding(.top, pendingEntries.isEmpty ? 0 : 4)
 
                             ForEach(completedEntries) { entry in
                                 IntentRowView(
