@@ -24,6 +24,17 @@ struct IntentEntry: Identifiable, Codable, Equatable {
     var sortRank: Double
     /// One of 16 preset colors, or nil if never tagged.
     var colorTag: TodoColorTag?
+    /// The app that was frontmost the moment this entry was submitted, if it
+    /// was added via an actual Cmd+Tab (nil for entries added via the menu
+    /// bar, Cmd+,, a fired reminder, or a repeated favorite -- there's no
+    /// "app you switched to" to attribute in those cases). Captured at
+    /// submission time, not gesture-detection time, so this reflects the app
+    /// you actually ended up in, not the one you switched away from -- see
+    /// PromptPanelViewModel.addEntryApplyingDefaultAlarm(). Stored (not
+    /// looked up later) since a quit or uninstalled app can't be resolved
+    /// after the fact. Synced like every other field -- see CloudSyncEngine.
+    var sourceAppName: String?
+    var sourceAppBundleID: String?
 
     init(
         id: UUID = UUID(),
@@ -36,7 +47,9 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         reminderSyncID: String? = nil,
         lastModifiedAt: Date? = nil,
         sortRank: Double = 0,
-        colorTag: TodoColorTag? = nil
+        colorTag: TodoColorTag? = nil,
+        sourceAppName: String? = nil,
+        sourceAppBundleID: String? = nil
     ) {
         self.id = id
         self.text = text
@@ -49,11 +62,14 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         self.lastModifiedAt = lastModifiedAt ?? createdAt
         self.sortRank = sortRank
         self.colorTag = colorTag
+        self.sourceAppName = sourceAppName
+        self.sourceAppBundleID = sourceAppBundleID
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, text, createdAt, completed, completedAt, favorite, reminderDate
         case reminderSyncID, lastModifiedAt, sortRank, colorTag
+        case sourceAppName, sourceAppBundleID
     }
 
     // Custom decoder so entries.json files saved before `favorite`/`reminderDate`
@@ -74,5 +90,7 @@ struct IntentEntry: Identifiable, Codable, Equatable {
         lastModifiedAt = try container.decodeIfPresent(Date.self, forKey: .lastModifiedAt) ?? createdAt
         sortRank = try container.decodeIfPresent(Double.self, forKey: .sortRank) ?? 0
         colorTag = try container.decodeIfPresent(TodoColorTag.self, forKey: .colorTag)
+        sourceAppName = try container.decodeIfPresent(String.self, forKey: .sourceAppName)
+        sourceAppBundleID = try container.decodeIfPresent(String.self, forKey: .sourceAppBundleID)
     }
 }

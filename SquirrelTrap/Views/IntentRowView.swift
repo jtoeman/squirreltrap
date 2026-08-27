@@ -45,6 +45,18 @@ struct IntentRowView: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
+            // The app you were switching to when this was added via Cmd+Tab
+            // — absent for anything added another way (menu bar, Cmd+,, a
+            // fired reminder, a repeated favorite), which is the normal,
+            // expected state for a lot of entries, not an error case.
+            if let sourceAppName = entry.sourceAppName {
+                Text(sourceAppName)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.panelTextSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+
             Spacer(minLength: 0)
 
             // Reminders and color tagging only make sense for tasks you

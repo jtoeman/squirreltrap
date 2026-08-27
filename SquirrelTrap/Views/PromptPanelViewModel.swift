@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 @MainActor
@@ -12,6 +13,16 @@ final class PromptPanelViewModel: ObservableObject {
     // animation, then clears itself. Not persisted; a transient UI moment,
     // not state.
     @Published var isCelebrating = false
+    // True only when this panel show was triggered by an actual Cmd+Tab (see
+    // reset(viaSwitchGesture:)) -- gates whether submit() attributes a fresh
+    // entry to the app you switched to. Deliberately read fresh at submit
+    // time, not captured back at gesture-detection time: by the time you've
+    // typed something and hit Enter, the OS's own app switch (which Squirrel
+    // Trap's own non-activating panel never interferes with) has already
+    // settled on the real destination, so NSWorkspace.frontmostApplication
+    // at that moment reliably reflects where you actually ended up, not
+    // wherever you started from.
+    private var attributeSourceApp = false
 
     let intentStore: IntentStore
     private let reminderScheduler: ReminderScheduler
@@ -32,6 +43,18 @@ final class PromptPanelViewModel: ObservableObject {
     func cancelReminder(for entryID: UUID) {
         intentStore.setReminder(id: entryID, date: nil)
         reminderScheduler.cancel(for: entryID)
+    }
+
+    /// Same action as Preferences → General's "Clear Finished Items" --
+    /// exposed here too for one-tap access right where completed items are
+    /// actually visible, instead of only reachable from a different tab.
+    /// Cancels any live reminder Timers for the removed entries the same way
+    /// that button does, since IntentStore only owns the persisted data, not
+    /// the scheduler.
+    func clearCompletedEntries() {
+        for id in intentStore.clearCompleted() {
+            reminderScheduler.cancel(for: id)
+        }
     }
 
     /// Completing a task with an active alarm silences it -- there's nothing
@@ -63,23 +86,26 @@ final class PromptPanelViewModel: ObservableObject {
     /// identity didn't change, and drops back out of favorites mode from any
     /// previous show. `entryID` carries a reminder-triggered highlight through;
     /// a normal Cmd+Tab show passes nil, clearing any highlight from before.
-    func reset(highlighting entryID: UUID? = nil) {
+    func reset(highlighting entryID: UUID? = nil, viaSwitchGesture: Bool = false) {
         draftText = ""
         focusToken = UUID()
         isShowingFavorites = false
         highlightedEntryID = entryID
+        attributeSourceApp = viaSwitchGesture
     }
 
     func submit(dismiss: () -> Void) {
         let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            addEntryApplyingDefaultAlarm(text: trimmed)
+            addEntryApplyingDefaultAlarm(text: trimmed, attributeSourceApp: attributeSourceApp)
         }
         dismiss()
     }
 
     /// Logs a fresh copy of a favorited intent, then drops back to the normal
-    /// list so the user immediately sees it land at the top.
+    /// list so the user immediately sees it land at the top. Never attributed
+    /// to a source app -- repeating a favorite isn't a Cmd+Tab-originated
+    /// capture, it's just re-logging something you already had saved.
     func repeatFavorite(_ entry: IntentEntry) {
         addEntryApplyingDefaultAlarm(text: entry.text)
         isShowingFavorites = false
@@ -91,8 +117,14 @@ final class PromptPanelViewModel: ObservableObject {
     /// (Auto-snooze after entry) only need implementing once, each
     /// independent of the others' state.
     @discardableResult
-    private func addEntryApplyingDefaultAlarm(text: String) -> IntentEntry {
-        let entry = intentStore.add(text: text)
+    private func addEntryApplyingDefaultAlarm(text: String, attributeSourceApp: Bool = false) -> IntentEntry {
+        var sourceAppName: String?
+        var sourceAppBundleID: String?
+        if attributeSourceApp, let frontmost = NSWorkspace.shared.frontmostApplication {
+            sourceAppName = frontmost.localizedName
+            sourceAppBundleID = frontmost.bundleIdentifier
+        }
+        let entry = intentStore.add(text: text, sourceAppName: sourceAppName, sourceAppBundleID: sourceAppBundleID)
 
         if let defaultColorTag = preferences.defaultColorTag {
             intentStore.setColor(id: entry.id, colorTag: defaultColorTag)

@@ -85,9 +85,9 @@ final class IntentStore: ObservableObject {
     }
 
     @discardableResult
-    func add(text: String) -> IntentEntry {
+    func add(text: String, sourceAppName: String? = nil, sourceAppBundleID: String? = nil) -> IntentEntry {
         let minRank = entries.first(where: { !$0.completed })?.sortRank ?? 0
-        let entry = IntentEntry(text: text, sortRank: minRank - 1)
+        let entry = IntentEntry(text: text, sortRank: minRank - 1, sourceAppName: sourceAppName, sourceAppBundleID: sourceAppBundleID)
         entries.insert(entry, at: 0)
         save()
         return entry

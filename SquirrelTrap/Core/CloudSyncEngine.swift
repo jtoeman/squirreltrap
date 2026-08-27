@@ -279,7 +279,9 @@ final class CloudSyncEngine: ObservableObject {
             reminderDate: record["reminderDate"] as? Date,
             lastModifiedAt: remoteModified,
             sortRank: record["sortRank"] as? Double ?? 0,
-            colorTag: TodoColorTag(rawValue: record["colorTag"] as? String ?? "")
+            colorTag: TodoColorTag(rawValue: record["colorTag"] as? String ?? ""),
+            sourceAppName: record["sourceAppName"] as? String,
+            sourceAppBundleID: record["sourceAppBundleID"] as? String
         )
         intentStore.applyCloudEntry(entry)
 
@@ -356,6 +358,8 @@ final class CloudSyncEngine: ObservableObject {
         record["reminderDate"] = entry.reminderDate as CKRecordValue?
         record["sortRank"] = entry.sortRank as CKRecordValue
         record["colorTag"] = entry.colorTag?.rawValue as CKRecordValue?
+        record["sourceAppName"] = entry.sourceAppName as CKRecordValue?
+        record["sourceAppBundleID"] = entry.sourceAppBundleID as CKRecordValue?
         return record
     }
 }

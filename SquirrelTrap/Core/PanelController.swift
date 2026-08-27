@@ -181,7 +181,13 @@ final class PanelController: NSObject {
         dismissTimer?.invalidate()
     }
 
-    func showPromptPanel(highlighting entryID: UUID? = nil) {
+    /// `viaSwitchGesture` is true only for the actual Cmd+Tab trigger (see
+    /// SquirrelTrapApp's onSwitchGestureDetected) -- every other entry point
+    /// (menu bar icon/menu, Cmd+,, a fired reminder) passes the default
+    /// false. Threaded through to PromptPanelViewModel so it can attribute a
+    /// freshly-added entry to the app you switched to, but only when there
+    /// was an actual switch to attribute it to.
+    func showPromptPanel(highlighting entryID: UUID? = nil, viaSwitchGesture: Bool = false) {
         // Redirects every normal entry point (Cmd+Tab, menu bar click) into
         // onboarding until it's actually completed -- dismissing onboarding
         // without finishing just postpones it, since the next trigger lands
@@ -216,7 +222,7 @@ final class PanelController: NSObject {
         // flash of stale content — but the focus *trigger* below has to wait until
         // after present() actually makes the window key, otherwise SwiftUI applies
         // it to a not-yet-key window and the caret never actually lands.
-        promptViewModel.reset(highlighting: entryID)
+        promptViewModel.reset(highlighting: entryID, viaSwitchGesture: viaSwitchGesture)
         _ = obtainPanel()
         let controller = promptHostingController ?? {
             let controller = NSHostingController(
