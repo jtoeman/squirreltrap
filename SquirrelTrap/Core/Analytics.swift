@@ -22,6 +22,9 @@ enum AnalyticsEvent: String {
     /// "actually uninstalled": both look identical (total silence) without
     /// this, since macOS has no uninstall hook to observe directly.
     case dailyHeartbeat = "Daily Heartbeat"
+    case npsShown = "NPS Shown"
+    case npsSubmitted = "NPS Submitted"
+    case npsDismissed = "NPS Dismissed"
 }
 
 /// Thin wrapper around the Amplitude client, gated entirely by
@@ -85,6 +88,37 @@ final class AnalyticsService {
             // there's no @Published to key a Combine subscription off. Cheap
             // enough to just re-read it every time this already gets called.
             .set(property: "launch_at_login_enabled", value: LaunchAtLoginManager.isEnabled)
+            // The actual installed/running version -- without this there's no
+            // way to see in Amplitude how far an update has actually
+            // propagated (e.g. "how many people are still on 1.8.0 a week
+            // after 1.8.1 shipped"), which is normally the single most
+            // useful line on a distribution-health view.
+            .set(property: "app_version", value: Self.appVersionString)
+        amplitude.identify(identify: identify)
+    }
+
+    /// CFBundleShortVersionString -- the real shipped version (e.g. "1.8.1"),
+    /// same in Debug and Release, unlike DebugBuildTag's "1.8.1c"-style
+    /// testing label which only exists in Debug and is never what a
+    /// distribution dashboard should be grouping by.
+    private static var appVersionString: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+    }
+
+    /// Sets the NPS score/category as user properties (for segmenting other
+    /// behavior by response, e.g. "do Promoters complete more tasks") --
+    /// separate from the Event tracked in NPSSubmitted, which carries the
+    /// score plus the optional free-text reason.
+    func recordNPSScore(_ score: Int) {
+        let category: String
+        switch score {
+        case 0...6: category = "detractor"
+        case 7...8: category = "passive"
+        default: category = "promoter"
+        }
+        let identify = Identify()
+            .set(property: "nps_score", value: score)
+            .set(property: "nps_category", value: category)
         amplitude.identify(identify: identify)
     }
 }
