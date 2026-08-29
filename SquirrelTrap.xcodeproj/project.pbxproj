@@ -50,6 +50,7 @@
 		5FA1B2C3D4E5F607080900C9 /* CoachTip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F6070809003F /* CoachTip.swift */; };
 		5FA1B2C3D4E5F607080900CA /* CoachTipBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090040 /* CoachTipBubble.swift */; };
 		5FA1B2C3D4E5F607080900D8 /* AnalyticsConsentPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F607080900D7 /* AnalyticsConsentPrompt.swift */; };
+		5FA1B2C3D4E5F607080900E2 /* NPSPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F607080900E1 /* NPSPromptView.swift */; };
 		5FA1B2C3D4E5F607080900CB /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090041 /* WidgetSnapshot.swift */; };
 		5FA1B2C3D4E5F607080900CC /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F60708090041 /* WidgetSnapshot.swift */; };
 		5FA1B2C3D4E5F607080900CF /* PanelTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1B2C3D4E5F607080900CE /* PanelTheme.swift */; };
@@ -130,6 +131,7 @@
 		5FA1B2C3D4E5F6070809003F /* CoachTip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachTip.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090040 /* CoachTipBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachTipBubble.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F607080900D7 /* AnalyticsConsentPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsConsentPrompt.swift; sourceTree = "<group>"; };
+		5FA1B2C3D4E5F607080900E1 /* NPSPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSPromptView.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F60708090041 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F607080900CE /* PanelTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelTheme.swift; sourceTree = "<group>"; };
 		5FA1B2C3D4E5F607080900D5 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 				5FA1B2C3D4E5F6070809003E /* HelpTip.swift */,
 				5FA1B2C3D4E5F60708090040 /* CoachTipBubble.swift */,
 				5FA1B2C3D4E5F607080900D7 /* AnalyticsConsentPrompt.swift */,
+				5FA1B2C3D4E5F607080900E1 /* NPSPromptView.swift */,
 				5FA1B2C3D4E5F60708090022 /* PendingRowView.swift */,
 				5FA1B2C3D4E5F60708090017 /* PermissionRequestView.swift */,
 				5FA1B2C3D4E5F6070809001C /* PreferencesView.swift */,
@@ -435,6 +438,7 @@
 				5FA1B2C3D4E5F607080900C8 /* HelpTip.swift in Sources */,
 				5FA1B2C3D4E5F607080900CA /* CoachTipBubble.swift in Sources */,
 				5FA1B2C3D4E5F607080900D8 /* AnalyticsConsentPrompt.swift in Sources */,
+				5FA1B2C3D4E5F607080900E2 /* NPSPromptView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -24,6 +24,7 @@ struct PromptPanelView: View {
     // Gates AnalyticsConsentPrompt to at most once per launch even if this
     // view re-appears multiple times before the user answers it.
     @State private var isShowingAnalyticsConsent = false
+    @State private var isShowingNPSPrompt = false
     var onDismiss: () -> Void
     var onEscape: () -> Void
     var onOpenPreferences: () -> Void
@@ -141,6 +142,16 @@ struct PromptPanelView: View {
             guard preferences.hasAskedAnalyticsConsent else { return }
             checkForCoachTip()
         }
+        .onChange(of: viewModel.pendingNPSPrompt) { _, isPending in
+            guard isPending else { return }
+            viewModel.pendingNPSPrompt = false
+            // Don't stack it on top of a coach tip or the consent ask --
+            // both are popovers anchored in this same header; NPS just
+            // waits for its own next eligible completion rather than
+            // fighting another popover for the same anchor point right now.
+            guard activeCoachTip == nil, !isShowingAnalyticsConsent else { return }
+            isShowingNPSPrompt = true
+        }
     }
 
     private func decideAnalyticsConsent(enabled: Bool) {
@@ -204,6 +215,31 @@ struct PromptPanelView: View {
             .popover(isPresented: $isShowingAnalyticsConsent) {
                 AnalyticsConsentPrompt(themeAccent: themeAccent, onDecide: decideAnalyticsConsent)
             }
+            .popover(isPresented: npsPopoverBinding) {
+                NPSPromptView(themeAccent: themeAccent, onSubmit: submitNPS)
+            }
+    }
+
+    /// Closing before ever picking a score (the "x", clicking outside,
+    /// Escape) is a dismissal with nothing to submit -- NPSPromptView itself
+    /// has no dismiss callback, since SwiftUI already routes every one of
+    /// those paths through this binding's setter the same way CoachTip's
+    /// binding does.
+    private var npsPopoverBinding: Binding<Bool> {
+        Binding(
+            get: { isShowingNPSPrompt },
+            set: { isPresented in
+                if !isPresented {
+                    viewModel.dismissNPSPrompt()
+                }
+                isShowingNPSPrompt = isPresented
+            }
+        )
+    }
+
+    private func submitNPS(score: Int, feedback: String?) {
+        viewModel.submitNPS(score: score, feedback: feedback)
+        isShowingNPSPrompt = false
     }
 
     // Debug builds only -- see DebugBuildTag.swift.

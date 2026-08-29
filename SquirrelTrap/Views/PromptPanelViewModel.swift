@@ -79,6 +79,56 @@ final class PromptPanelViewModel: ObservableObject {
                 isCelebrating = false
             }
         }
+        if isEligibleForNPSPrompt() {
+            preferences.lastNPSPromptShownAt = Date()
+            pendingNPSPrompt = true
+            AnalyticsService.shared.track(.npsShown)
+        }
+    }
+
+    /// True right after PromptPanelView should show the NPS prompt -- a
+    /// one-shot trigger the View consumes and resets, same idea as
+    /// focusToken, just boolean since only one can ever be queued at a time.
+    @Published var pendingNPSPrompt = false
+
+    /// Only ever true right after a task completion (see toggleCompleted) --
+    /// not gated on panel-show count like CoachTip, since "just did
+    /// something satisfying" is a deliberately better moment to ask than an
+    /// arbitrary cold open. Every threshold here is about asking someone
+    /// who's actually experienced the product, not a brand-new install:
+    /// - opted into analytics at all (an NPS score is itself usage data;
+    ///   asking despite a declined opt-out would run against what they
+    ///   already told us)
+    /// - at least 14 days past onboarding (nil onboardingCompletedAt, an
+    ///   existing install from before this feature shipped, always counts
+    ///   as "long past" -- it must never block someone who's been using
+    ///   this for a year just because we don't know exactly when they
+    ///   started)
+    /// - at least 10 completed tasks ever, some real usage to have an
+    ///   opinion about
+    /// - hasn't been shown in the last 180 days, answered or not
+    private func isEligibleForNPSPrompt() -> Bool {
+        guard preferences.analyticsEnabled else { return false }
+        let daysSinceOnboarding = preferences.onboardingCompletedAt
+            .map { Date().timeIntervalSince($0) / 86400 } ?? .infinity
+        guard daysSinceOnboarding >= 14 else { return false }
+        guard intentStore.entries.filter({ $0.completed }).count >= 10 else { return false }
+        if let lastShown = preferences.lastNPSPromptShownAt {
+            guard Date().timeIntervalSince(lastShown) / 86400 >= 180 else { return false }
+        }
+        return true
+    }
+
+    func submitNPS(score: Int, feedback: String?) {
+        AnalyticsService.shared.track(.npsSubmitted, properties: [
+            "score": score,
+            "feedback": feedback ?? ""
+        ])
+        AnalyticsService.shared.recordNPSScore(score)
+    }
+
+    func dismissNPSPrompt() {
+        AnalyticsService.shared.track(.npsDismissed)
     }
 
     /// Called every time the panel is about to be shown: clears the draft, bumps

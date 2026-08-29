@@ -78,6 +78,25 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
     }
 
+    /// Stamped once, at the moment onboarding actually finishes -- see
+    /// PanelController.showOnboardingPanel()'s onFinished. Nil for anyone who
+    /// completed onboarding before this existed (an existing long-time
+    /// install upgrading to this version); NPSPrompt's eligibility check
+    /// treats nil as "a long time ago," never as "just now," so it never
+    /// blocks NPS from ever showing for those users.
+    @Published var onboardingCompletedAt: Date? {
+        didSet { UserDefaults.standard.set(onboardingCompletedAt, forKey: Keys.onboardingCompletedAt) }
+    }
+
+    /// Set every time the NPS prompt is actually shown, whether or not the
+    /// person answered it -- gates the re-prompt cooldown (see
+    /// PromptPanelViewModel.isEligibleForNPSPrompt). A dismissal counts the
+    /// same as an answer for this purpose: either way, asking again sooner
+    /// than the cooldown is just annoying.
+    @Published var lastNPSPromptShownAt: Date? {
+        didSet { UserDefaults.standard.set(lastNPSPromptShownAt, forKey: Keys.lastNPSPromptShownAt) }
+    }
+
     /// Counts every time the main prompt panel has been shown -- CoachTip's
     /// triggerCount values are checked against this. Bumped in
     /// PanelController.showPromptPanel(), never for Preferences/onboarding
@@ -238,6 +257,8 @@ final class AppPreferences: ObservableObject {
         static let celebrationEnabled = "celebrationEnabled"
         static let showStreak = "showStreak"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
+        static let onboardingCompletedAt = "onboardingCompletedAt"
+        static let lastNPSPromptShownAt = "lastNPSPromptShownAt"
         static let totalPanelShows = "totalPanelShows"
         static let dismissedCoachTips = "dismissedCoachTips"
         static let coachTipRotationIndex = "coachTipRotationIndex"
@@ -352,6 +373,8 @@ final class AppPreferences: ObservableObject {
         reminderSyncListIdentifier = UserDefaults.standard.string(forKey: Keys.reminderSyncListIdentifier)
         lastReminderSyncAt = UserDefaults.standard.object(forKey: Keys.lastReminderSyncAt) as? Date
         lastHeartbeatSentAt = UserDefaults.standard.object(forKey: Keys.lastHeartbeatSentAt) as? Date
+        onboardingCompletedAt = UserDefaults.standard.object(forKey: Keys.onboardingCompletedAt) as? Date
+        lastNPSPromptShownAt = UserDefaults.standard.object(forKey: Keys.lastNPSPromptShownAt) as? Date
 
         snoozeUntil = UserDefaults.standard.object(forKey: Keys.snoozeUntil) as? Date
 
