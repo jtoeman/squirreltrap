@@ -216,7 +216,7 @@ struct PromptPanelView: View {
                 AnalyticsConsentPrompt(themeAccent: themeAccent, onDecide: decideAnalyticsConsent)
             }
             .popover(isPresented: npsPopoverBinding) {
-                NPSPromptView(themeAccent: themeAccent, onSubmit: submitNPS)
+                NPSPromptView(themeAccent: themeAccent, onSubmit: submitNPS, onNotRightNow: postponeNPS)
             }
     }
 
@@ -239,6 +239,11 @@ struct PromptPanelView: View {
 
     private func submitNPS(score: Int, feedback: String?) {
         viewModel.submitNPS(score: score, feedback: feedback)
+        isShowingNPSPrompt = false
+    }
+
+    private func postponeNPS() {
+        viewModel.postponeNPSPrompt()
         isShowingNPSPrompt = false
     }
 

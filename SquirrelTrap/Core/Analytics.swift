@@ -25,6 +25,7 @@ enum AnalyticsEvent: String {
     case npsShown = "NPS Shown"
     case npsSubmitted = "NPS Submitted"
     case npsDismissed = "NPS Dismissed"
+    case npsPostponed = "NPS Postponed"
 }
 
 /// Thin wrapper around the Amplitude client, gated entirely by

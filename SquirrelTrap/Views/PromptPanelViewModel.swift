@@ -106,7 +106,12 @@ final class PromptPanelViewModel: ObservableObject {
     ///   started)
     /// - at least 10 completed tasks ever, some real usage to have an
     ///   opinion about
-    /// - hasn't been shown in the last 180 days, answered or not
+    /// - hasn't been shown in the last npsCooldownDays, answered or not --
+    ///   unless explicitly postponed (see postponeNPSPrompt), which uses its
+    ///   own much shorter cooldown instead
+    private static let npsCooldownDays: TimeInterval = 180
+    private static let npsPostponeCooldownDays: TimeInterval = 2
+
     private func isEligibleForNPSPrompt() -> Bool {
         guard preferences.analyticsEnabled else { return false }
         let daysSinceOnboarding = preferences.onboardingCompletedAt
@@ -114,7 +119,7 @@ final class PromptPanelViewModel: ObservableObject {
         guard daysSinceOnboarding >= 14 else { return false }
         guard intentStore.entries.filter({ $0.completed }).count >= 10 else { return false }
         if let lastShown = preferences.lastNPSPromptShownAt {
-            guard Date().timeIntervalSince(lastShown) / 86400 >= 180 else { return false }
+            guard Date().timeIntervalSince(lastShown) / 86400 >= Self.npsCooldownDays else { return false }
         }
         return true
     }
@@ -129,6 +134,17 @@ final class PromptPanelViewModel: ObservableObject {
 
     func dismissNPSPrompt() {
         AnalyticsService.shared.track(.npsDismissed)
+    }
+
+    /// "Not right now" -- a softer, explicit ask-again-soon than closing the
+    /// popover outright. Backdates lastNPSPromptShownAt (rather than adding
+    /// a second cooldown field) so it reuses the exact same eligibility
+    /// check above and naturally becomes eligible again in exactly
+    /// npsPostponeCooldownDays, instead of the full npsCooldownDays.
+    func postponeNPSPrompt() {
+        preferences.lastNPSPromptShownAt = Date()
+            .addingTimeInterval(-(Self.npsCooldownDays - Self.npsPostponeCooldownDays) * 86400)
+        AnalyticsService.shared.track(.npsPostponed)
     }
 
     /// Called every time the panel is about to be shown: clears the draft, bumps
