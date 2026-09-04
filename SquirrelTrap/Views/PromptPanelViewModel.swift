@@ -96,9 +96,6 @@ final class PromptPanelViewModel: ObservableObject {
     /// something satisfying" is a deliberately better moment to ask than an
     /// arbitrary cold open. Every threshold here is about asking someone
     /// who's actually experienced the product, not a brand-new install:
-    /// - opted into analytics at all (an NPS score is itself usage data;
-    ///   asking despite a declined opt-out would run against what they
-    ///   already told us)
     /// - at least 14 days past onboarding (nil onboardingCompletedAt, an
     ///   existing install from before this feature shipped, always counts
     ///   as "long past" -- it must never block someone who's been using
@@ -112,8 +109,14 @@ final class PromptPanelViewModel: ObservableObject {
     private static let npsCooldownDays: TimeInterval = 180
     private static let npsPostponeCooldownDays: TimeInterval = 2
 
+    /// Not gated on preferences.analyticsEnabled: whether general usage
+    /// data is shared and whether someone is willing to answer this one
+    /// specific question are different decisions. Someone who declined
+    /// blanket analytics can still be asked -- see submitNPS(), which
+    /// routes their answer through a dedicated consent path
+    /// (AnalyticsService.recordNPSResponseRegardlessOfConsent) that sends
+    /// only the answer itself, nothing else.
     private func isEligibleForNPSPrompt() -> Bool {
-        guard preferences.analyticsEnabled else { return false }
         let daysSinceOnboarding = preferences.onboardingCompletedAt
             .map { Date().timeIntervalSince($0) / 86400 } ?? .infinity
         guard daysSinceOnboarding >= 14 else { return false }
@@ -125,11 +128,15 @@ final class PromptPanelViewModel: ObservableObject {
     }
 
     func submitNPS(score: Int, feedback: String?) {
-        AnalyticsService.shared.track(.npsSubmitted, properties: [
-            "score": score,
-            "feedback": feedback ?? ""
-        ])
-        AnalyticsService.shared.recordNPSScore(score)
+        if preferences.analyticsEnabled {
+            AnalyticsService.shared.track(.npsSubmitted, properties: [
+                "score": score,
+                "feedback": feedback ?? ""
+            ])
+            AnalyticsService.shared.recordNPSScore(score)
+        } else {
+            AnalyticsService.shared.recordNPSResponseRegardlessOfConsent(score: score, feedback: feedback)
+        }
     }
 
     func dismissNPSPrompt() {

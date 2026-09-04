@@ -216,7 +216,12 @@ struct PromptPanelView: View {
                 AnalyticsConsentPrompt(themeAccent: themeAccent, onDecide: decideAnalyticsConsent)
             }
             .popover(isPresented: npsPopoverBinding) {
-                NPSPromptView(themeAccent: themeAccent, onSubmit: submitNPS, onNotRightNow: postponeNPS)
+                NPSPromptView(
+                    themeAccent: themeAccent,
+                    isAnsweringOutsideAnalyticsConsent: !preferences.analyticsEnabled,
+                    onSubmit: submitNPS,
+                    onNotRightNow: postponeNPS
+                )
             }
     }
 

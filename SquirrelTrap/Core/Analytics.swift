@@ -48,10 +48,27 @@ final class AnalyticsService {
     // repo included -- is the normal, supported way to use them.
     private let apiKey = "bda41837fad0bfd16296fd14dd5eae4c"
 
+    /// A second, entirely separate Amplitude client, always opted in, used
+    /// for exactly one thing: an NPS score the person submitted while
+    /// general analytics sharing is off. Answering a specific question
+    /// they're looking at is a deliberate act of consent for that one
+    /// answer -- distinct from the blanket "share usage data" toggle -- but
+    /// that consent covers only the answer itself, nothing else. Never
+    /// route anything else through this client; a dedicated instance (vs.
+    /// briefly toggling `amplitude.configuration.optOut` on the shared
+    /// client) means there is no shared queue/buffer to worry about
+    /// accidentally flushing anything this person hasn't agreed to.
+    private let npsOnlyClient: Amplitude
+
     private init() {
         amplitude = Amplitude(configuration: Configuration(
             apiKey: apiKey,
             optOut: true,
+            autocapture: []
+        ))
+        npsOnlyClient = Amplitude(configuration: Configuration(
+            apiKey: apiKey,
+            optOut: false,
             autocapture: []
         ))
     }
@@ -109,17 +126,40 @@ final class AnalyticsService {
     /// Sets the NPS score/category as user properties (for segmenting other
     /// behavior by response, e.g. "do Promoters complete more tasks") --
     /// separate from the Event tracked in NPSSubmitted, which carries the
-    /// score plus the optional free-text reason.
+    /// score plus the optional free-text reason. Call only when analytics is
+    /// actually enabled -- see recordNPSResponseRegardlessOfConsent for the
+    /// declined-analytics path.
     func recordNPSScore(_ score: Int) {
-        let category: String
-        switch score {
-        case 0...6: category = "detractor"
-        case 7...8: category = "passive"
-        default: category = "promoter"
-        }
         let identify = Identify()
             .set(property: "nps_score", value: score)
-            .set(property: "nps_category", value: category)
+            .set(property: "nps_category", value: npsCategory(for: score))
         amplitude.identify(identify: identify)
+    }
+
+    /// The declined-analytics counterpart to track(.npsSubmitted, ...) +
+    /// recordNPSScore(_:) -- routes through npsOnlyClient instead of the
+    /// main, opted-out client, and deliberately sends nothing beyond the
+    /// score/feedback/category themselves: no app_version, no other user
+    /// properties, nothing that wasn't specifically what this person just
+    /// answered. Call only when preferences.analyticsEnabled is false; when
+    /// it's true, the normal track(.npsSubmitted, ...) + recordNPSScore(_:)
+    /// pair already covers it via the main client.
+    func recordNPSResponseRegardlessOfConsent(score: Int, feedback: String?) {
+        npsOnlyClient.track(eventType: AnalyticsEvent.npsSubmitted.rawValue, eventProperties: [
+            "score": score,
+            "feedback": feedback ?? ""
+        ])
+        let identify = Identify()
+            .set(property: "nps_score", value: score)
+            .set(property: "nps_category", value: npsCategory(for: score))
+        npsOnlyClient.identify(identify: identify)
+    }
+
+    private func npsCategory(for score: Int) -> String {
+        switch score {
+        case 0...6: return "detractor"
+        case 7...8: return "passive"
+        default: return "promoter"
+        }
     }
 }

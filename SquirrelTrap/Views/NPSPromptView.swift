@@ -17,6 +17,12 @@ import SwiftUI
 /// it does.
 struct NPSPromptView: View {
     let themeAccent: Color
+    /// True when preferences.analyticsEnabled is off -- shows an honest note
+    /// that answering this one question sends that answer anyway (see
+    /// AnalyticsService.recordNPSResponseRegardlessOfConsent), so answering
+    /// is never a silent exception to what "Share Usage Data" being off
+    /// otherwise means.
+    var isAnsweringOutsideAnalyticsConsent: Bool
     var onSubmit: (_ score: Int, _ feedback: String?) -> Void
     var onNotRightNow: () -> Void
 
@@ -76,6 +82,14 @@ struct NPSPromptView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(Color.panelTextSecondary)
                 .frame(width: contentWidth)
+
+                if isAnsweringOutsideAnalyticsConsent {
+                    Text("Share Usage Data is off, but answering here still sends this one response.")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.panelTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(width: contentWidth, alignment: .leading)
+                }
 
                 Button("Not right now") { onNotRightNow() }
                     .buttonStyle(.plain)
