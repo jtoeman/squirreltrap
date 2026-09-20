@@ -1,11 +1,14 @@
 import EventKit
 import Foundation
 
-/// Syncs IntentStore with a single Apple Reminders list. Only ever runs when
-/// explicitly invoked via sync() — no background polling, no
-/// EKEventStoreChangedNotification observer. Scope is deliberately narrow:
-/// title + completion status only (not due dates, favorites, or Squirrel
-/// Trap's own in-app reminder timers, which are an unrelated concept).
+/// Syncs IntentStore with exactly one Apple Reminders list, always: a
+/// dedicated "Squirrel Trap" list, auto-created if it doesn't exist yet --
+/// see dedicatedListOrCreate(). There is no way to point this at any other
+/// list. Only ever runs when explicitly invoked via sync() — no background
+/// polling, no EKEventStoreChangedNotification observer. Scope is
+/// deliberately narrow: title + completion status only (not due dates,
+/// favorites, or Squirrel Trap's own in-app reminder timers, which are an
+/// unrelated concept).
 @MainActor
 final class ReminderSyncEngine: ObservableObject {
     @Published private(set) var isSyncing = false
@@ -19,11 +22,6 @@ final class ReminderSyncEngine: ObservableObject {
         self.preferences = preferences
     }
 
-    /// Every Reminders list available for picking in Preferences.
-    func availableLists() -> [EKCalendar] {
-        eventStore.calendars(for: .reminder)
-    }
-
     func requestAccess() async -> Bool {
         do {
             return try await eventStore.requestFullAccessToReminders()
@@ -33,11 +31,16 @@ final class ReminderSyncEngine: ObservableObject {
     }
 
     /// Auto-creates (or reuses, if this ever runs twice -- e.g. a reinstall)
-    /// a private "Squirrel Trap" list, so turning sync on for the first time
-    /// never defaults onto an existing list the user already has, which
-    /// might be shared with other people without them realizing it. Sync
-    /// still starts from a real, deliberate choice if they'd rather use a
-    /// different list -- this only sets the zero-click default.
+    /// a private "Squirrel Trap" list. This is the *only* list Reminders
+    /// sync ever touches -- there is deliberately no way to point it at an
+    /// existing list instead (no picker, nothing persisted as a chosen
+    /// identifier). That's a simplification on purpose: a user-chosen list
+    /// could be one already shared with other people without them
+    /// realizing it, and "always exactly this one list" is a much smaller
+    /// thing to reason about than "whichever list happened to be selected
+    /// last." Resolved fresh on every sync() call by title rather than a
+    /// cached identifier, since the lookup is cheap and this way there's
+    /// nothing to go stale if the list is ever deleted and needs recreating.
     func dedicatedListOrCreate() async -> EKCalendar? {
         guard await requestAccess() else { return nil }
         let title = "Squirrel Trap"
@@ -63,9 +66,7 @@ final class ReminderSyncEngine: ObservableObject {
     func sync() async {
         let direction = preferences.reminderSyncDirection
         guard direction != .off else { return }
-        guard let listID = preferences.reminderSyncListIdentifier,
-              let calendar = eventStore.calendar(withIdentifier: listID) else { return }
-        guard await requestAccess() else { return }
+        guard let calendar = await dedicatedListOrCreate() else { return }
 
         isSyncing = true
         defer { isSyncing = false }

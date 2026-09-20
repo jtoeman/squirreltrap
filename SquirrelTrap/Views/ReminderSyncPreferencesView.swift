@@ -1,4 +1,3 @@
-import EventKit
 import SwiftUI
 
 /// A separate page from the main PreferencesView (which is a fixed 420x340
@@ -10,9 +9,7 @@ struct ReminderSyncPreferencesView: View {
     @ObservedObject var syncEngine: ReminderSyncEngine
     var onBack: () -> Void
 
-    @State private var availableLists: [EKCalendar] = []
-    @State private var isLoadingLists = false
-    @State private var accessDenied = false
+    @State private var listSetupFailed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -30,20 +27,14 @@ struct ReminderSyncPreferencesView: View {
                 .pickerStyle(.menu)
                 .labelsHidden()
                 .onChange(of: preferences.reminderSyncDirection) { oldValue, newValue in
-                    // Turning sync on for the first time defaults to a
-                    // dedicated private "Squirrel Trap" list (auto-created if
-                    // needed) rather than leaving no list chosen -- picking an
-                    // existing list is still just as available below, but the
-                    // zero-click default is never one that might already be
-                    // shared with other people. This also forces the
-                    // permission prompt right away rather than silently
-                    // no-op'ing on the next sync attempt.
-                    guard oldValue == .off, newValue != .off, preferences.reminderSyncListIdentifier == nil else { return }
+                    // Turning sync on for the first time creates the
+                    // dedicated "Squirrel Trap" list right away (rather than
+                    // waiting for the next sync attempt) so the permission
+                    // prompt, and any list-creation failure, surface
+                    // immediately instead of silently no-op'ing later.
+                    guard oldValue == .off, newValue != .off else { return }
                     Task {
-                        if let calendar = await syncEngine.dedicatedListOrCreate() {
-                            preferences.reminderSyncListIdentifier = calendar.calendarIdentifier
-                        }
-                        await loadLists()
+                        listSetupFailed = await syncEngine.dedicatedListOrCreate() == nil
                     }
                 }
             }
@@ -62,14 +53,14 @@ struct ReminderSyncPreferencesView: View {
 
             Divider()
 
-            listPicker
+            listStatus
 
             HStack(spacing: 6) {
                 Button("Sync Now") {
                     Task { await syncEngine.sync() }
                 }
                 .controlSize(.small)
-                .disabled(preferences.reminderSyncDirection == .off || preferences.reminderSyncListIdentifier == nil || syncEngine.isSyncing)
+                .disabled(preferences.reminderSyncDirection == .off || syncEngine.isSyncing)
 
                 if syncEngine.isSyncing {
                     ProgressView()
@@ -93,6 +84,17 @@ struct ReminderSyncPreferencesView: View {
         .padding(.top, 10)
         .frame(width: 520, height: 460, alignment: .top)
         .onExitCommand(perform: onBack)
+        .onAppear {
+            // Catches access having been revoked since sync was turned on --
+            // the onChange handler above only fires the moment direction
+            // flips from off, not on every later visit to this screen.
+            // Skipped entirely while sync is off so just viewing
+            // Preferences never forces the permission prompt.
+            guard preferences.reminderSyncDirection != .off else { return }
+            Task {
+                listSetupFailed = await syncEngine.dedicatedListOrCreate() == nil
+            }
+        }
     }
 
     private var header: some View {
@@ -108,62 +110,23 @@ struct ReminderSyncPreferencesView: View {
     }
 
     @ViewBuilder
-    private var listPicker: some View {
+    private var listStatus: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("Reminders list")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.panelTextPrimary)
-                Spacer()
-                Button(availableLists.isEmpty ? "Load Lists…" : "Refresh") {
-                    Task { await loadLists() }
-                }
-                .controlSize(.small)
-            }
+            Text("Reminders list")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.panelTextPrimary)
 
-            Text("Defaults to a private \"Squirrel Trap\" list just for this app -- pick a different one below if you'd rather use an existing list.")
-                .font(.system(size: 11))
-                .foregroundStyle(Color.panelTextSecondary)
-
-            if isLoadingLists {
-                ProgressView()
-                    .controlSize(.small)
-            } else if accessDenied {
+            if listSetupFailed {
                 Text("Reminders access was denied. Enable it in System Settings → Privacy & Security → Reminders, then try again.")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.panelTextSecondary)
-            } else if !availableLists.isEmpty {
-                Picker("", selection: $preferences.reminderSyncListIdentifier) {
-                    Text("None").tag(String?.none)
-                    ForEach(availableLists, id: \.calendarIdentifier) { calendar in
-                        Text(calendar.title).tag(String?.some(calendar.calendarIdentifier))
-                    }
-                }
-                .pickerStyle(.menu)
-                .labelsHidden()
-            } else if preferences.reminderSyncListIdentifier != nil {
-                Text("Using a previously chosen list — tap Load Lists to change it.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.panelTextSecondary)
             } else {
-                Text("No list chosen yet.")
+                Text("Always a private \"Squirrel Trap\" list, created automatically just for this app -- there's no other list to choose.")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.panelTextSecondary)
             }
         }
         .font(.system(size: 12))
-    }
-
-    private func loadLists() async {
-        isLoadingLists = true
-        let granted = await syncEngine.requestAccess()
-        isLoadingLists = false
-        guard granted else {
-            accessDenied = true
-            return
-        }
-        accessDenied = false
-        availableLists = syncEngine.availableLists()
     }
 
     private var footer: some View {

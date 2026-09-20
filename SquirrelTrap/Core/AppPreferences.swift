@@ -142,10 +142,6 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(reminderSyncEveryNInvocations, forKey: Keys.reminderSyncEveryNInvocations) }
     }
 
-    @Published var reminderSyncListIdentifier: String? {
-        didSet { UserDefaults.standard.set(reminderSyncListIdentifier, forKey: Keys.reminderSyncListIdentifier) }
-    }
-
     @Published var lastReminderSyncAt: Date? {
         didSet { UserDefaults.standard.set(lastReminderSyncAt, forKey: Keys.lastReminderSyncAt) }
     }
@@ -265,7 +261,6 @@ final class AppPreferences: ObservableObject {
         static let showTips = "showTips"
         static let reminderSyncDirection = "reminderSyncDirection"
         static let reminderSyncEveryNInvocations = "reminderSyncEveryNInvocations"
-        static let reminderSyncListIdentifier = "reminderSyncListIdentifier"
         static let lastReminderSyncAt = "lastReminderSyncAt"
         static let lastHeartbeatSentAt = "lastHeartbeatSentAt"
         static let snoozeUntil = "snoozeUntil"
@@ -370,7 +365,6 @@ final class AppPreferences: ObservableObject {
             reminderSyncEveryNInvocations = UserDefaults.standard.integer(forKey: Keys.reminderSyncEveryNInvocations)
         }
 
-        reminderSyncListIdentifier = UserDefaults.standard.string(forKey: Keys.reminderSyncListIdentifier)
         lastReminderSyncAt = UserDefaults.standard.object(forKey: Keys.lastReminderSyncAt) as? Date
         lastHeartbeatSentAt = UserDefaults.standard.object(forKey: Keys.lastHeartbeatSentAt) as? Date
         onboardingCompletedAt = UserDefaults.standard.object(forKey: Keys.onboardingCompletedAt) as? Date

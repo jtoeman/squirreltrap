@@ -38,7 +38,7 @@ struct PreferencesSyncTab: View {
                             // wait for the every-Nth-show fallback (or a push that
                             // hasn't arrived yet) reads as "nothing happened" — sync
                             // right away instead, same as turning on Reminders sync
-                            // immediately forces a list load.
+                            // immediately creates its dedicated list.
                             guard !oldValue, newValue else { return }
                             Task { await cloudSyncEngine.sync() }
                         }
