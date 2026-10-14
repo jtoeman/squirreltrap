@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squirrel Trap: catch the distraction before it catches you</title>
+<meta name="description" content="A tiny Mac app that pops up every time you press Cmd+Tab and asks: what are you about to do? Free, private, notarized by Apple.">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta property="og:title" content="Squirrel Trap">
+<meta property="og:description" content="Every Cmd+Tab becomes a chance to name what you're about to do. A tiny focus app for Mac.">
+<meta property="og:image" content="https://squirreltrap.fun/icon.png">
+<meta property="og:url" content="https://squirreltrap.fun/">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1a6bf0; --blue-deep:#0f4fc2; --orange:#e8731a; --orange-soft:#ffe6d1;
+  --steel:#8a94a3; --ink:#1b2230; --muted:#5a6475; --bg:#fffaf4; --card:#ffffff;
+  --line:#efe3d6; --shadow:0 10px 30px rgba(27,34,48,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ink:#f3efe9; --muted:#a9b1bf; --bg:#141821; --card:#1d2330; --line:#2b3242;
+         --orange-soft:#3a2615; --shadow:0 10px 30px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--blue)}
+h1,h2,h3{font-family:Fredoka,Inter,sans-serif;line-height:1.15;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:flex;align-items:center;gap:10px;font-family:Fredoka,Inter,system-ui,sans-serif;font-weight:600;font-size:20px;color:var(--ink);text-decoration:none}
+.brand img{width:34px;height:34px;border-radius:9px}
+nav .links a{color:var(--muted);text-decoration:none;margin-left:22px;font-weight:500;font-size:15px}
+nav .links a:hover{color:var(--ink)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:48px 0 72px}
+.eyebrow{display:inline-block;background:var(--orange-soft);color:var(--orange);font-weight:600;font-size:13px;padding:5px 12px;border-radius:999px;margin-bottom:18px;letter-spacing:.02em}
+.hero h1{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-.01em}
+.hero h1 .o{color:var(--orange)}
+.hero p.lede{font-size:19px;color:var(--muted);margin:20px 0 30px;max-width:34ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;padding:15px 24px;border-radius:14px;box-shadow:0 6px 0 var(--blue-deep);transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translateY(2px);box-shadow:0 4px 0 var(--blue-deep)}
+.btn:active{transform:translateY(6px);box-shadow:0 0 0 var(--blue-deep)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.btn.ghost:hover{box-shadow:inset 0 0 0 2px var(--steel);transform:none}
+.fine{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* demo stage */
+.stage{position:relative;aspect-ratio:1/1;max-width:440px;justify-self:center;width:100%}
+.stage .icon{position:absolute;inset:8% 8% auto auto;width:62%;border-radius:22%;box-shadow:var(--shadow);transform:rotate(4deg)}
+.prompt{position:absolute;left:0;bottom:6%;width:82%;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;animation:pop 6s ease-in-out infinite}
+.prompt .q{font-family:Fredoka,Inter,system-ui,sans-serif;font-weight:600;font-size:17px;margin-bottom:10px}
+.prompt .field{border:2px solid var(--blue);border-radius:10px;padding:9px 12px;font-size:15px;min-height:42px;white-space:nowrap;overflow:hidden}
+.prompt .field span{border-right:2px solid var(--blue);animation:caret 1s step-end infinite;padding-right:2px}
+.keys{position:absolute;left:4%;top:10%;display:flex;gap:6px;animation:press 6s ease-in-out infinite}
+.key{background:var(--card);border:1px solid var(--line);border-bottom-width:4px;border-radius:10px;padding:8px 13px;font-weight:600;font-size:15px;box-shadow:var(--shadow)}
+@keyframes pop{0%,8%{opacity:0;transform:translateY(16px) scale(.96)}14%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:translateY(8px)}}
+@keyframes press{0%,4%{transform:none}7%,10%{transform:translateY(3px)}13%,100%{transform:none}}
+@keyframes caret{50%{border-color:transparent}}
+
+/* sections */
+section{padding:72px 0}
+.sec-head{text-align:center;max-width:620px;margin:0 auto 44px}
+.sec-head h2{font-size:clamp(30px,4vw,40px)}
+.sec-head p{color:var(--muted);font-size:18px;margin:12px 0 0}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px}
+.step .n{width:38px;height:38px;border-radius:12px;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:Fredoka,Inter,system-ui,sans-serif;font-weight:700;font-size:19px;margin-bottom:14px}
+.step h3{font-size:21px;margin-bottom:6px}
+.step p{margin:0;color:var(--muted)}
+
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.feat .e{font-size:26px;line-height:1;margin-bottom:12px}
+.feat h3{font-size:18px;margin-bottom:4px}
+.feat p{margin:0;color:var(--muted);font-size:15px}
+
+.privacy{background:var(--blue);color:#fff;border-radius:28px;padding:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.privacy h2{font-size:clamp(28px,3.6vw,38px)}
+.privacy p{opacity:.92;margin:14px 0 0}
+.privacy ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.privacy li{background:rgba(255,255,255,.12);border-radius:14px;padding:14px 16px}
+.privacy li b{display:block;font-family:Fredoka,Inter,system-ui,sans-serif;font-weight:600;font-size:17px}
+
+.faq{max-width:760px;margin:0 auto}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px;margin-bottom:12px}
+summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";float:right;color:var(--orange);font-family:Fredoka,Inter,system-ui,sans-serif;font-size:22px;line-height:1}
+details[open] summary::after{content:"\2013"}
+details p{color:var(--muted);margin:10px 0 0}
+code{background:var(--orange-soft);padding:1px 6px;border-radius:6px;font-size:.9em}
+
+.final{text-align:center;padding:88px 0}
+.final img{width:96px;border-radius:22px;box-shadow:var(--shadow);margin-bottom:22px}
+.final h2{font-size:clamp(30px,4.4vw,44px);margin-bottom:22px}
+
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer a{color:var(--muted)}
+.build{font-variant-numeric:tabular-nums;opacity:.6}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;padding-top:24px;gap:36px}
+  .hero p.lede{max-width:none}
+  .steps,.features{grid-template-columns:1fr}
+  .privacy{grid-template-columns:1fr;padding:32px 24px}
+  nav .links a:not(.dl){display:none}
+}
+@media (min-width:861px) and (max-width:1000px){.features{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){.prompt,.keys,.prompt .field span{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#"><img src="icon.png" alt="">Squirrel Trap</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a class="dl" href="https://github.com/jtoeman/squirreltrap/releases/latest">Download</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Free focus app for Mac</span>
+      <h1>Catch the <span class="o">squirrel</span> before it catches you.</h1>
+      <p class="lede">Every time you hit Cmd+Tab, Squirrel Trap asks one tiny question: <b>what are you about to do?</b> Name it, and you're far less likely to wander off chasing something shiny.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/jtoeman/squirreltrap/releases/latest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13M6 11l6 6 6-6M5 21h14"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn ghost" href="https://github.com/jtoeman/squirreltrap">View on GitHub</a>
+      </div>
+      <p class="fine">macOS 14 or later. Signed and notarized by Apple, so it opens with no warnings.</p>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <img class="icon" src="icon.png" alt="">
+      <div class="keys"><div class="key">&#8984; cmd</div><div class="key">tab</div></div>
+      <div class="prompt">
+        <div class="q">What are you about to do?</div>
+        <div class="field"><span>Reply to Dana about the Q4 deck</span></div>
+      </div>
+    </div>
+  </header>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>The moment before the rabbit hole</h2>
+      <p>Switching apps is exactly when focus slips. Squirrel Trap turns that split second into a quick check-in.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>You press Cmd+Tab</h3><p>Like you do a few hundred times a day, usually on autopilot.</p></div>
+      <div class="step"><div class="n">2</div><h3>A tiny box pops up</h3><p>"What are you about to do?" Type it, dictate it, or just glance and keep going.</p></div>
+      <div class="step"><div class="n">3</div><h3>It becomes a checklist</h3><p>Everything you name lands on a running list you can check off as you actually get to it.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Small app, lots of little delights</h2>
+      <p>Everything is optional. Out of the box it's just the prompt and the list.</p>
+    </div>
+    <div class="features">
+      <div class="feat"><div class="e">&#11088;</div><h3>Favorites</h3><p>Save the to-dos you log often and re-add them in one click.</p></div>
+      <div class="feat"><div class="e">&#128564;</div><h3>Snooze</h3><p>Need an uninterrupted stretch? Silence the prompt for a few minutes without quitting.</p></div>
+      <div class="feat"><div class="e">&#9989;</div><h3>Reminders sync</h3><p>Mirror your list to Apple Reminders, one way or both ways. Your call.</p></div>
+      <div class="feat"><div class="e">&#9729;&#65039;</div><h3>iCloud sync</h3><p>Keep every Mac in step through your own private iCloud, with near-instant updates.</p></div>
+      <div class="feat"><div class="e">&#9200;</div><h3>Default alarm</h3><p>Have every new to-do nudge you after a set time, no extra taps.</p></div>
+      <div class="feat"><div class="e">&#127912;</div><h3>Color tags</h3><p>Sixteen colors, Trello-style, for a quick visual sort at a glance.</p></div>
+      <div class="feat"><div class="e">&#128293;</div><h3>Streaks</h3><p>A quiet day-streak, today's count, and a 7-day activity graph. Plus a little celebration when you finish things.</p></div>
+      <div class="feat"><div class="e">&#127897;&#65039;</div><h3>Voice friendly</h3><p>It's a normal Mac text field, so Dictation and Wispr Flow just work.</p></div>
+      <div class="feat"><div class="e">&#129692;</div><h3>Featherweight</h3><p>Lives in your menu bar, stays out of the way, and one permission is all the setup there is.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="privacy">
+      <div>
+        <h2>Your to-dos stay on your Mac.</h2>
+        <p>No account. No server. Your list is a plain file on your own disk, and nothing leaves your Mac unless you switch something on.</p>
+        <p>Squirrel Trap only listens for the Cmd+Tab keypress. It never records anything else you type.</p>
+      </div>
+      <ul>
+        <li><b>Reminders sync: off by default</b>Shares your list with Apple's Reminders app, on your terms.</li>
+        <li><b>iCloud sync: off by default</b>Uses your private iCloud via Apple's CloudKit. No third parties.</li>
+        <li><b>Usage sharing: off by default</b>Anonymous feature counts only. Never the text of your to-dos.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head"><h2>Questions</h2></div>
+    <div class="faq">
+      <details><summary>How do I install it?</summary><p>Download the zip, unzip it, and drag Squirrel Trap.app wherever you like (Applications, Desktop, anywhere). It's signed and notarized, so it opens normally.</p></details>
+      <details><summary>Why does it need Input Monitoring?</summary><p>That's how macOS lets an app notice the Cmd+Tab keypress. It's listen-only, and Squirrel Trap ignores everything except that one shortcut. The app walks you through granting it on first launch. If it doesn't appear in System Settings, go to Privacy &amp; Security, Input Monitoring, click +, and add the app manually.</p></details>
+      <details><summary>Won't a pop-up every Cmd+Tab get annoying?</summary><p>It's one small box you can dismiss instantly, and Snooze turns it off for as long as you want when you're heads-down. Most people find a gentle speed bump is exactly the point.</p></details>
+      <details><summary>Does it cost anything?</summary><p>No. It's free.</p></details>
+      <details><summary>How do I uninstall it?</summary><p>Quit from the menu bar icon and drag the app to the Trash. To clear your history too, delete <code>~/Library/Application Support/SquirrelTrap/</code> and <code>~/Library/Preferences/com.jtoeman.squirreltrap.plist</code>.</p></details>
+      <details><summary>Found a bug or have an idea?</summary><p>This is an early, personal project and feedback is gold. <a href="https://github.com/jtoeman/squirreltrap/issues">Open a GitHub issue</a>.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <img src="icon.png" alt="Squirrel Trap icon">
+    <h2>Set the trap. Keep the focus.</h2>
+    <a class="btn" href="https://github.com/jtoeman/squirreltrap/releases/latest">Download for macOS</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Jeremy Toeman. Conceived by a human, coded by Claude.</span>
+    <span><a href="https://github.com/jtoeman/squirreltrap">GitHub</a> &middot; <a href="https://github.com/jtoeman/squirreltrap/issues">Feedback</a> &middot; <span class="build" title="site build">site build 37.1</span></span>
+  </div>
+</footer>
+
+</body>
+</html>
